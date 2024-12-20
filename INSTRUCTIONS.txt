@@ -1,0 +1,70 @@
+Job Submission GUI Application Instructions
+=========================================
+
+1. Main Window Layout
+--------------------
+The application window is divided into three main panels:
+- Left Panel: Job submission form
+- Middle Panel: Response/Details view
+- Right Panel: Jobs history table
+
+2. Submitting a Job
+------------------
+a) Fill in the required fields in the left panel:
+   - Scenario: Enter the scenario name
+   - Subject: Enter the subject line
+   - Body: Enter the message body
+
+b) Set Rate Limit (optional):
+   - Adjust the submission rate limit in seconds (default: 30s)
+   - This controls how frequently jobs can be submitted
+
+c) Click "Submit Job" to queue the job
+   - Jobs are processed according to the rate limit
+   - Current queue status is shown in the status bar
+
+3. Managing Jobs
+---------------
+a) View Queue:
+   - Select "View > Show Queue" from the menu
+   - Shows current processing job and pending jobs
+
+b) Refresh Jobs:
+   - Click "File > Refresh" or the "Refresh" button
+   - Updates job list from the server
+
+4. Viewing Job History
+---------------------
+The right panel shows all submitted jobs with:
+- Scenario name
+- Objective statuses (✓ for success, ✗ for failure)
+- Subject and message body
+- Scheduled and started times
+
+5. Filtering and Sorting
+-----------------------
+a) Filter jobs by:
+   - Scenario: Type in the scenario filter box
+   - Objectives: Use +/- checkboxes to include/exclude specific objectives
+
+b) Sort jobs by:
+   - Click column headers or use the "Sort by" dropdown
+   - Toggle ascending/descending order with the arrow button
+
+6. Job Details and Templates
+---------------------------
+a) View job details:
+   - Click on any job in the table to see full details
+
+b) Use existing job as template:
+
+   - Select a job from the table
+   - Click "Use as Template" to populate the submission form
+
+7. Status Information
+--------------------
+- Job count is displayed in the left panel
+- Queue status and next submission time shown in status bar
+- Job processing status updates in real-time
+
+Note: The application automatically saves all jobs and queue state to a local CSV file for persistence between sessions.
