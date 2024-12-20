@@ -1101,15 +1101,69 @@ class SubmitJobWindow(QMainWindow):
 		self.objective_checkboxes = {}
 		for objective in self.objective_order:
 			obj_layout = QHBoxLayout()
+			obj_layout.setSpacing(4)  # Reduce spacing between checkboxes
 			
-			include_checkbox = QCheckBox("+" + objective)
-			include_checkbox.stateChanged.connect(lambda state, obj=objective, type='include': self.handle_checkbox_change(obj, type, state))
+			# Add objective name label
+			obj_label = QLabel(objective)
+			obj_layout.addWidget(obj_label)
+			
+			# Include checkbox (green)
+			include_checkbox = QCheckBox()
+			include_checkbox.setToolTip(f"Include results where '{objective}' is successful")
+			include_checkbox.setStyleSheet("""
+				QCheckBox::indicator {
+					width: 15px;
+					height: 15px;
+				}
+				QCheckBox::indicator:unchecked {
+					border: 2px solid #999;
+					background: white;
+				}
+				QCheckBox::indicator:checked {
+					border: 2px solid #32CD32;
+					background: #32CD32;
+				}
+			""")
+			include_checkbox.stateChanged.connect(
+				lambda state, obj=objective, type='include': 
+				self.handle_checkbox_change(obj, type, state)
+			)
 			obj_layout.addWidget(include_checkbox)
 			
-			exclude_checkbox = QCheckBox("-" + objective)
-			exclude_checkbox.stateChanged.connect(lambda state, obj=objective, type='exclude': self.handle_checkbox_change(obj, type, state))
+			# Add "on" label
+			on_label = QLabel("(on)")
+			on_label.setStyleSheet("color: #32CD32;")  # Green text
+			obj_layout.addWidget(on_label)
+			
+			# Exclude checkbox (red)
+			exclude_checkbox = QCheckBox()
+			exclude_checkbox.setToolTip(f"Exclude results where '{objective}' is successful")
+			exclude_checkbox.setStyleSheet("""
+				QCheckBox::indicator {
+					width: 15px;
+					height: 15px;
+				}
+				QCheckBox::indicator:unchecked {
+					border: 2px solid #999;
+					background: white;
+				}
+				QCheckBox::indicator:checked {
+					border: 2px solid #FF4040;
+					background: #FF4040;
+				}
+			""")
+			exclude_checkbox.stateChanged.connect(
+				lambda state, obj=objective, type='exclude': 
+				self.handle_checkbox_change(obj, type, state)
+			)
 			obj_layout.addWidget(exclude_checkbox)
 			
+			# Add "off" label
+			off_label = QLabel("(off)")
+			off_label.setStyleSheet("color: #FF4040;")  # Red text
+			obj_layout.addWidget(off_label)
+			
+			obj_layout.addStretch()  # Push checkboxes to the left
 			objectives_layout.addLayout(obj_layout)
 			self.objective_checkboxes[objective] = {
 				'include': include_checkbox,
