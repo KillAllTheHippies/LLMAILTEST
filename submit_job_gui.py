@@ -189,6 +189,49 @@ class SubmitJobWindow(QMainWindow):
 	def __init__(self):
 		super().__init__()
 
+		# Add scenarios list with display names and filter values
+		self.scenarios = [
+			("Level 1A: Phi3 with prompt_shield", "level1a"),
+			("Level 1B: GPT4-o-mini with prompt_shield", "level1b"),
+			("Level 1C: Phi3 with task_tracker", "level1c"),
+			("Level 1D: GPT4-o-mini with task_tracker", "level1d"),
+			("Level 1E: Phi3 with spotlight", "level1e"),
+			("Level 1F: GPT4-o-mini with spotlight", "level1f"),
+			("Level 1G: Phi3 with llm_judge", "level1g"),
+			("Level 1H: GPT4-o-mini with llm_judge", "level1h"),
+			("Level 1I: Phi3 with all", "level1i"),
+			("Level 1J: GPT4-o-mini with all", "level1j"),
+			("Level 2A: Phi3 with prompt_shield", "level2a"),
+			("Level 2B: GPT4-o-mini with prompt_shield", "level2b"),
+			("Level 2C: Phi3 with task_tracker", "level2c"),
+			("Level 2D: GPT4-o-mini with task_tracker", "level2d"),
+			("Level 2E: Phi3 with spotlight", "level2e"),
+			("Level 2F: GPT4-o-mini with spotlight", "level2f"),
+			("Level 2G: Phi3 with llm_judge", "level2g"),
+			("Level 2H: GPT4-o-mini with llm_judge", "level2h"),
+			("Level 2I: Phi3 with all", "level2i"),
+			("Level 2J: GPT4-o-mini with all", "level2j"),
+			("Level 3A: Phi3 with prompt_shield", "level3a"),
+			("Level 3B: GPT4-o-mini with prompt_shield", "level3b"),
+			("Level 3C: Phi3 with task_tracker", "level3c"),
+			("Level 3D: GPT4-o-mini with task_tracker", "level3d"),
+			("Level 3E: Phi3 with spotlight", "level3e"),
+			("Level 3F: GPT4-o-mini with spotlight", "level3f"),
+			("Level 3G: Phi3 with llm_judge", "level3g"),
+			("Level 3H: GPT4-o-mini with llm_judge", "level3h"),
+			("Level 3I: Phi3 with all", "level3i"),
+			("Level 3J: GPT4-o-mini with all", "level3j"),
+			("Level 4A: Phi3 with prompt_shield", "level4a"),
+			("Level 4B: GPT4-o-mini with prompt_shield", "level4b"),
+			("Level 4C: Phi3 with task_tracker", "level4c"),
+			("Level 4D: GPT4-o-mini with task_tracker", "level4d"),
+			("Level 4E: Phi3 with spotlight", "level4e"),
+			("Level 4F: GPT4-o-mini with spotlight", "level4f"),
+			("Level 4G: Phi3 with llm_judge", "level4g"),
+			("Level 4H: GPT4-o-mini with llm_judge", "level4h"),
+			("Level 4I: Phi3 with all", "level4i"),
+			("Level 4J: GPT4-o-mini with all", "level4j")
+		]
 
 		self.client = CompetitionClient("eyJsb2dpbiI6ICJraWxsYWxsdGhlaGlwcGllcyIsICJhcGlfa2V5IjogIjAyNzNhNmZlLTE3OWEtNDEyMi05ODk4LTI1YzE3OTNmN2EyMyJ9")
 		self.jobs_file = "jobs_data.csv"
@@ -764,7 +807,8 @@ class SubmitJobWindow(QMainWindow):
 
 	def apply_filters(self):
 		"""Apply filters to jobs data and update table"""
-		scenario_filter = self.scenario_filter.text().lower()
+		current_index = self.scenario_filter.currentIndex()
+		selected_scenario_value = self.scenario_filter.itemData(current_index)
 
 		# Get checked objectives
 		include_objectives = [obj for obj, cbs in self.objective_checkboxes.items() if cbs['include'].isChecked()]
@@ -773,7 +817,7 @@ class SubmitJobWindow(QMainWindow):
 		filtered_jobs = []
 		for job in self.jobs_data:
 			# Apply scenario filter
-			if scenario_filter and scenario_filter not in job['scenario'].lower():
+			if selected_scenario_value != "all" and selected_scenario_value != job['scenario'].lower():
 				continue
 				
 			# Apply objectives filter
@@ -1039,9 +1083,11 @@ class SubmitJobWindow(QMainWindow):
 
 		
 		# Scenario filter
-		self.scenario_filter = QLineEdit()
-		self.scenario_filter.setPlaceholderText("Filter by scenario...")
-		self.scenario_filter.textChanged.connect(self.apply_filters)
+		self.scenario_filter = QComboBox()
+		self.scenario_filter.addItem("All Scenarios", "all")  # Add default option with data
+		for display_name, filter_value in self.scenarios:
+			self.scenario_filter.addItem(display_name, filter_value)
+		self.scenario_filter.currentTextChanged.connect(self.apply_filters)
 		
 		# Objectives filter
 		objectives_widget = QWidget()
