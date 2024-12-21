@@ -225,6 +225,8 @@ class UIPanels:
         parent.sort_combo.addItems(initial_headers)
         parent.sort_combo.setCurrentText("Started Time")
         parent.sort_combo.currentTextChanged.connect(parent.handle_sort_change)
+
+
         
         parent.sort_order_btn = QPushButton("↓")
         parent.sort_order_btn.setFixedWidth(20)  # Smaller width
@@ -325,6 +327,12 @@ class UIPanels:
         
         jobs_layout.addWidget(parent.jobs_table)
         
+        # Initialize the sort column to Started Time after table is set up
+        for i in range(parent.jobs_table.columnCount()):
+            if parent.jobs_table.horizontalHeaderItem(i).text() == "Started Time":
+                parent.table_manager.sort_table(i)
+                break
+
         # Set size policy
         jobs_panel.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         jobs_panel.setMinimumWidth(0)

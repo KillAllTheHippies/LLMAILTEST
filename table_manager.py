@@ -184,8 +184,11 @@ class TableManager:
                 width = font_metrics.horizontalAdvance("YYYY-MM-DD HH:MM:SS") + 20
             self.parent.jobs_table.setColumnWidth(col, width)
 
-    def sort_table(self, column):
+    def sort_table(self, column, update_combo=True):
         """Sort table by clicked column header"""
+        # Get header text at the start to avoid scope issues
+        header_text = self.parent.jobs_table.horizontalHeaderItem(column).text()
+        
         if self.sort_column == column:
             # Toggle sort order if clicking the same column
             self.sort_order = Qt.DescendingOrder if self.sort_order == Qt.AscendingOrder else Qt.AscendingOrder
@@ -196,8 +199,10 @@ class TableManager:
             self.parent.sort_order_btn.setText("↓")
         
         self.sort_column = column
-        header_text = self.parent.jobs_table.horizontalHeaderItem(column).text()
-        self.parent.sort_combo.setCurrentText(header_text)
+        
+        # Only update combo box if this is a header click
+        if update_combo:
+            self.parent.sort_combo.setCurrentText(header_text)
         
         # Get all rows data
         rows_data = []
@@ -232,4 +237,5 @@ class TableManager:
         """Toggle between ascending and descending sort order"""
         self.sort_order = Qt.DescendingOrder if self.sort_order == Qt.AscendingOrder else Qt.AscendingOrder
         self.parent.sort_order_btn.setText("↑" if self.sort_order == Qt.AscendingOrder else "↓")
-        self.sort_table(self.sort_column)
+        # Call sort_table with update_combo=False to maintain current column selection
+        self.sort_table(self.sort_column, update_combo=False)

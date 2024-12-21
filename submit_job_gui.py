@@ -386,16 +386,26 @@ class SubmitJobWindow(QMainWindow):
         self.table_manager.sort_table(column)
 
     def toggle_sort_order(self):
-        self.table_manager.toggle_sort_order()
-        self.table_manager.sort_table(self.table_manager.sort_column)
+        """Toggle between ascending and descending sort order"""
+        # Get the current column from sort combo
+        column_name = self.sort_combo.currentText()
+        # Find column index
+        for i in range(self.jobs_table.columnCount()):
+            if self.jobs_table.horizontalHeaderItem(i).text() == column_name:
+                self.table_manager.toggle_sort_order()
+                self.table_manager.sort_table(i, update_combo=False)
+                break
 
     def handle_sort_change(self, column_name):
         """Handle sort column selection change"""
         # Find column index
         for i in range(self.jobs_table.columnCount()):
             if self.jobs_table.horizontalHeaderItem(i).text() == column_name:
-                self.table_manager.sort_table(i)
+                self.table_manager.sort_table(i, update_combo=False)
                 break
+
+
+
 
     def show_context_menu(self, position):
         self.context_menu_manager.show_context_menu(position)
