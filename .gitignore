@@ -12,3 +12,5 @@ __pycache__/ui_components.cpython-312.pyc
 *.bak
 __pycache__/submit_job.cpython-312.pyc
 __pycache__/submit_job.cpython-312.pyc
+*.csv
+*.bak

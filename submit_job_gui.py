@@ -16,7 +16,32 @@ from table_manager import TableManager
 from context_menu import ContextMenuManager
 
 class SubmitJobWindow(QMainWindow):
+    """
+    Main window for submitting and managing competition jobs.
+    
+    This class provides a GUI interface for:
+    - Submitting new jobs with scenario, subject and body
+    - Viewing job history and results 
+    - Managing job queue and rate limits
+    - Filtering and sorting job results
+    - Displaying job objectives and completion status
+    
+    The window is divided into three panels:
+    - Input panel: For submitting new jobs
+    - Response panel: Shows selected job details
+    - Jobs panel: Table view of all jobs and their status
+    """
     def __init__(self):
+        """
+        Initialize the SubmitJobWindow with all required components.
+        
+        Sets up:
+        - Sort state and column configurations
+        - Scenario definitions and objective tracking
+        - Core components (client, file storage, managers)
+        - UI timers for job processing and updates
+        - Window layout and panels
+        """
         super().__init__()
 
         # Initialize sort state
@@ -119,6 +144,19 @@ class SubmitJobWindow(QMainWindow):
         self.load_jobs()
 
     def setup_ui(self):
+        """
+        Configure and layout the main UI components.
+        
+        Creates:
+        - Menu bar with File and View menus
+        - Three-panel horizontal split layout
+        - Input panel for job submission
+        - Response panel for job details
+        - Jobs panel for job history table
+        - Status bar for system messages
+        
+        The panels are arranged in a QSplitter for adjustable sizing.
+        """
         # Create menu bar
         menubar = self.menuBar()
         file_menu = menubar.addMenu("File")
@@ -172,7 +210,16 @@ class SubmitJobWindow(QMainWindow):
 
 
     def submit_job(self):
-        """Submit a new job"""
+        """
+        Submit a new job to the competition system.
+        
+        Retrieves values from input fields:
+        - scenario: Selected competition scenario
+        - subject: Email subject line
+        - body: Email body content
+        
+        Delegates actual submission to job_processor and updates queue display.
+        """
         scenario = self.scenario_input.text()
         subject = self.subject_input.text()
         body = self.body_input.toPlainText()
@@ -181,7 +228,17 @@ class SubmitJobWindow(QMainWindow):
             self.update_queue_display()
 
     def update_queue_display(self):
-        """Update the queue table with current jobs"""
+        """
+        Update the queue table display with current job queue status.
+        
+        For each queued job, displays:
+        - Scenario name
+        - Subject and body
+        - Processing status
+        - Queue position
+        - Retry count
+        - Last API response
+        """
         self.queue_table.setRowCount(len(self.job_processor.job_queue))
         
         for row, job in enumerate(self.job_processor.job_queue):
@@ -202,7 +259,17 @@ class SubmitJobWindow(QMainWindow):
             self.queue_table.setItem(row, 6, QTableWidgetItem(job.get('last_response', '')))
 
     def load_jobs(self):
-        """Load jobs from CSV file"""
+        """
+        Load job history from CSV storage file.
+        
+        Processes:
+        - Reads job data from CSV
+        - Sorts by started_time descending
+        - Extracts and sorts objective columns
+        - Updates table filters and display
+        
+        Handles file access errors with user notification.
+        """
         self.jobs_data = []
         self.objective_columns = set()
         
@@ -233,7 +300,21 @@ class SubmitJobWindow(QMainWindow):
             QMessageBox.warning(self, "Error", f"Failed to load jobs: {str(e)}")
 
     def fetch_and_update_jobs(self):
-        """Fetch all jobs from API and update the CSV file"""
+        """
+        Fetch latest jobs from API and update local storage.
+        
+        Process:
+        1. Creates backup of existing CSV
+        2. Fetches job list from competition API
+        3. Converts API response to CSV format
+        4. Updates local CSV storage
+        5. Refreshes job display
+        
+        Handles errors by:
+        - Restoring CSV backup on failure
+        - Showing error messages to user
+        - Updating status bar
+        """
         try:
             # Create backup of existing CSV if it exists
             if os.path.exists(self.jobs_file):
@@ -283,7 +364,15 @@ class SubmitJobWindow(QMainWindow):
             self.statusBar().showMessage("Failed to update jobs from API")
 
     def update_rate_limit(self):
-        """Update the submission rate limit"""
+        """
+        Update the job submission rate limit.
+        
+        Validates user input:
+        - Ensures positive integer value
+        - Reverts to previous value on invalid input
+        
+        Updates job_processor rate limit if valid.
+        """
         try:
             new_limit = int(self.rate_limit_input.text())
             if new_limit > 0:
@@ -295,7 +384,17 @@ class SubmitJobWindow(QMainWindow):
 
 
     def update_submit_counter(self):
-        """Update the submission counter"""
+        """
+        Update submission counter and status display.
+        
+        Shows:
+        - Total/filtered job counts
+        - Queue length and status
+        - Time until next submission
+        - Current processing job ID
+        
+        Updates status bar with formatted status message.
+        """
         total_jobs = len(self.jobs_data)
         filtered_count = self.jobs_table.rowCount()
         jobs_count = f"[{filtered_count} of {total_jobs} jobs] - "
@@ -322,7 +421,19 @@ class SubmitJobWindow(QMainWindow):
 
 
     def update_submit_button_state(self):
-        """Update submit button color based on current state"""
+        """
+        Update submit button appearance based on submission state.
+        
+        Colors:
+        - Green: Ready to submit
+        - Orange: Rate limited
+        - Crimson: Rate limited with retries
+        
+        Considers:
+        - Rate limit override setting
+        - Time since last submission
+        - Retry status of queued jobs
+        """
         button_style = """
             QPushButton {
                 color: #000000;
@@ -366,7 +477,17 @@ class SubmitJobWindow(QMainWindow):
         self.body_input.setText(self.selected_job['body'])
 
     def show_job_details(self, item):
-        """Show selected job details in the response panel"""
+        """
+        Display detailed information for selected job.
+        
+        Shows:
+        - Job ID and scenario
+        - Subject and body text
+        - Objectives with completion status
+        - Success/failure indicators
+        
+        Formats output as HTML with color coding for objectives.
+        """
         row = item.row()
         job_id = self.jobs_table.item(row, 0).data(Qt.UserRole)
         

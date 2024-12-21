@@ -1,184 +1,177 @@
-# Job Submission GUI Application
+# LLMail Competition Job Submission GUI
 
-A Python-based GUI application for submitting and managing jobs with real-time status tracking and comprehensive job history management.
+A professional Qt-based GUI application for managing and monitoring competition job submissions with comprehensive job tracking, analysis, and management capabilities.
 
-## Features
+## Core Features
 
-- **Job Submission**
-    - Submit jobs with scenario, subject, and body
-    - Rate-limited submission queue (30s between submissions)
-    - Real-time job status monitoring
-    - Automatic job completion detection
+### Job Submission System
+- **Scenario Selection**: 40 predefined competition scenarios across 4 levels
+- **Model Types**: Support for Phi3 and GPT4-o-mini models
+- **Defense Mechanisms**: 
+    - prompt_shield
+    - task_tracker
+    - spotlight
+    - llm_judge
+    - Combined defense options
+- **Rate-Limited Queue**:
+    - Configurable submission intervals
+    - Override capability for testing
+    - Visual status indicators
+    - Automatic retry handling
 
-- **Job History Management**
-    - CSV-based persistent storage
-    - Backup creation before updates
-    - Sortable and filterable job list
-    - Detailed job viewing with objectives tracking
+### Job Management
+- **Real-Time Monitoring**:
+    - Live status updates
+    - Queue position tracking
+    - Completion detection
+    - Error handling with retries
+- **Data Persistence**:
+    - CSV-based storage
+    - Automatic backups
+    - API synchronization
+    - Recovery mechanisms
 
-- **Advanced UI Features**
-    - Detachable jobs panel
-    - Detachable response panel
-    - Template-based job creation
-    - Multi-column sorting
-    - Objective-based filtering
-    - Scenario text filtering
+### Advanced Interface
 
-- **Job Status Visualization**
-    - Color-coded objective status
-    - Expandable job details
-    - HTML-formatted response view
+#### Input Panel
+- Scenario input field
+- Subject line entry
+- Body text area
+- Rate limit controls
+- Submit button with status colors:
+    - Green: Ready
+    - Orange: Rate limited
+    - Crimson: Rate limited with retries
+- Queue status display
+
+#### Response Panel
+- Detailed job information
+- HTML-formatted output
+- Color-coded objectives
+- Template creation capability
+- Interactive job selection
+
+#### Jobs Panel
+- **Comprehensive Filtering**:
+    - Scenario-based
+    - Model type
+    - Defense mechanism
+    - Objective completion
+- **Advanced Sorting**:
+    - Multi-column support
+    - Ascending/descending toggle
+    - Time-based ordering
+- **Visual Indicators**:
+    - Success/failure markers
     - Progress tracking
+    - Status updates
 
-## Prerequisites
+### Objective Tracking
+- **Five Key Objectives**:
+    1. email.retrieved
+    2. defense.undetected
+    3. exfil.sent
+    4. exfil.destination
+    5. exfil.content
+- Visual status indicators (✓/✗)
+- Color-coded results (green/red)
+- Filtering by completion status
 
-- Python 3.8+
-- Required Python packages:
-    - PySide6 >= 6.0.0 (GUI framework)
-    - requests >= 2.31.0 (API communication)
-    - python-dateutil >= 2.8.2 (Date handling)
+## Technical Details
 
-    Install all dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
+### Dependencies
+- **PySide6** (≥6.0.0): Qt framework implementation
+- **requests** (≥2.31.0): API communication
+- **python-dateutil** (≥2.8.2): Time handling
+- **pandas** (≥2.1.0): Data management
+- **colorama** (≥0.4.6): Console output formatting
 
-## Project Structure
+### System Requirements
+- Python 3.8 or higher
+- Modern operating system with GUI support
+- Network connectivity for API access
 
-```
-LLMail_Inject_Challenge/
-├── submit_job_gui.py     # Main GUI application
-├── submit_job.py         # Job submission client
-├── job_analyzer.py       # Job analysis utilities
-├── requirements.txt      # Python dependencies
-├── jobs_data.csv        # Job history storage
-└── jobs_data.csv.bak    # Backup of job history
-```
-
-Required Files:
-- submit_job_gui.py: Main application with GUI implementation
-- submit_job.py: Contains CompetitionClient and Job classes
-- job_analyzer.py: JobAnalyzer class for job data management
-- requirements.txt: Lists all Python package dependencies
-- jobs_data.csv: Stores job history (created automatically)
-- jobs_data.csv.bak: Backup file (created automatically)
-
-## Installation
+### Installation
 
 1. Clone the repository:
-     ```bash
-     git clone [repository-url]
-     cd [repository-name]
-     ```
+```bash
+git clone [repository-url]
+cd [repository-name]
+```
 
 2. Install dependencies:
-     ```bash
-     pip install -r requirements.txt
-     ```
+```bash
+pip install -r requirements.txt
+```
 
-## Usage
+3. Launch application:
+```bash
+python submit_job_gui.py
+```
 
-1. Start the application:
-     ```bash
-     python submit_job_gui.py
-     ```
+### Project Structure
+```
+project/
+├── submit_job_gui.py    # Main application
+├── submit_job.py        # API client implementation
+├── job_processor.py     # Job handling logic
+├── table_manager.py     # Table data management
+├── ui_components.py     # UI panel definitions
+├── context_menu.py      # Context menu handling
+├── queue_window.py      # Queue management window
+└── requirements.txt     # Package dependencies
+```
 
-2. Submit a job:
-     - Enter scenario details
-     - Fill in subject and body
-     - Click "Submit Job"
-     - Monitor progress in response panel
+## Usage Guide
 
-3. Manage jobs:
-     - Use filters to find specific jobs
-     - Sort by any column
-     - Double-click body text to expand
-     - Use checkboxes to filter by objectives
+### Basic Operation
+1. Select competition scenario
+2. Enter email subject and body
+3. Click submit button
+4. Monitor job progress
 
-4. Use advanced features:
-     - Detach panels using "Detach Window" buttons
-     - Use existing jobs as templates
-     - Monitor queued jobs in status bar
-     - Refresh job list manually
+### Advanced Features
+- **Template Usage**: Select existing job and use as template
+- **Queue Management**: Monitor and manage submission queue
+- **Job Analysis**: Filter and sort completed jobs
+- **Data Export**: Copy job details via context menu
+- **Status Tracking**: Monitor objectives completion
 
-## Interface Components
+### Troubleshooting
 
-### Main Window
-- Left Panel: Job submission form
-- Middle Panel: Job response viewer
-- Right Panel: Jobs history table
+#### Common Issues
+1. **Rate Limiting**:
+     - Wait for cooldown period
+     - Check rate limit settings
+     - Use override for testing
 
-### Jobs Table
-- Scenario column
-- Objective status columns
-- Subject and body columns
-- Timestamp columns
+2. **Data Synchronization**:
+     - Verify network connection
+     - Check API accessibility
+     - Ensure file permissions
 
-### Control Features
-- Sort controls
-- Filter inputs
-- Objective checkboxes
-- Refresh button
-- Detach controls
-
-## Job Management
-
-### Job Queue
-- Automatic rate limiting
-- Queue position display
-- Status updates
-- Error handling
-
-### Job History
-- CSV storage
-- Automatic updates
-- Backup creation
-- Data persistence
-
-## Objectives Tracking
-
-Supported objectives:
-- email.retrieved
-- defense.undetected
-- exfil.sent
-- exfil.destination
-- exfil.content
-
-Each objective shows:
-- ✓ (green) for success
-- ✗ (red) for failure
-
-## Troubleshooting
-
-Common issues:
-1. Job submission fails
-     - Check network connection
-     - Verify input fields
-     - Check rate limit timer
-
-2. CSV file issues
-     - Check file permissions
-     - Verify file not locked
-     - Check backup creation
-
-3. UI responsiveness
-     - Reduce table size
-     - Close detached windows
-     - Refresh data less frequently
+3. **UI Responsiveness**:
+     - Reduce filtered data size
+     - Clear queue if necessary
+     - Restart for memory cleanup
 
 ## Contributing
 
-1. Fork the repository
+1. Fork repository
 2. Create feature branch
-3. Commit changes
-4. Push to branch
-5. Create Pull Request
+3. Implement changes
+4. Submit pull request
 
 ## Support
 
-For support:
-- Open an issue
-- Contact maintainers
+For assistance:
+- Submit GitHub issues
 - Check documentation
+- Contact development team
+
+## License
+
+[Specify License]
+
 
 

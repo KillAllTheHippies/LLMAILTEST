@@ -1,36 +1,36 @@
-Job Submission GUI Application Instructions
-=========================================
+LLMail Competition Job Submission GUI - User Instructions
+======================================================
 
-1. Main Window Layout
---------------------
-The application window is divided into three main panels:
-- Left Panel: Job submission form
-- Middle Panel: Response/Details view
-- Right Panel: Jobs history table
+1. Application Overview
+----------------------
+The application provides a comprehensive interface for submitting and managing competition jobs across multiple scenarios and defense mechanisms.
 
-2. Submitting a Job
+2. Interface Layout
 ------------------
-a) Fill in the required fields in the left panel:
-   - Scenario: Enter the scenario name
-   - Subject: Enter the subject line
-   - Body: Enter the message body
+The main window consists of three adjustable panels:
+a) Left Panel - Job Submission:
+   - Scenario selection field
+   - Subject and body input areas
+   - Rate limit controls
+   - Queue status display
+   - Submit button with status indicators:
+     * Green: Ready to submit
+     * Orange: Rate limited
+     * Red: Rate limited with retries
 
-b) Set Rate Limit (optional):
-   - Adjust the submission rate limit in seconds (default: 30s)
-   - This controls how frequently jobs can be submitted
+b) Middle Panel - Job Details:
+   - Detailed view of selected job
+   - Job ID and scenario information
+   - Subject and body content
+   - Objectives status with color coding
+   - Template creation functionality
 
-c) Click "Submit Job" to queue the job
-   - Jobs are processed according to the rate limit
-   - Current queue status is shown in the status bar
+c) Right Panel - Jobs History:
+   - Sortable job listing
+   - Filter controls
+   - Objective status indicators
+   - Time-based information
 
-3. Managing Jobs
----------------
-a) View Queue:
-   - Select "View > Show Queue" from the menu
-   - Shows current processing job and pending jobs
-
-b) Refresh Jobs:
-   - Click "File > Refresh" or the "Refresh" button
    - Updates job list from the server
 
 4. Viewing Job History
