@@ -7,19 +7,13 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
 							  QHBoxLayout, QLabel, QLineEdit, QTextEdit, 
 							  QPushButton, QMessageBox, QTableWidget, 
 							  QTableWidgetItem, QComboBox, QCheckBox, QDialog,
-							  QMenu)
+							  QMenu, QSplitter, QSizePolicy)
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QAction
 
 from submit_job import CompetitionClient, Job
 from job_analyzer import JobAnalyzer
-
-
-
-
-
-
-
+from defense_filters import load_defense_levels, filter_by_model, filter_by_defense
 
 
 
@@ -301,7 +295,6 @@ class SubmitJobWindow(QMainWindow):
 
 
 	def setup_ui(self):
-
 		# Create menu bar
 		menubar = self.menuBar()
 		file_menu = menubar.addMenu("File")
@@ -314,20 +307,52 @@ class SubmitJobWindow(QMainWindow):
 		show_queue_action = view_menu.addAction("Show Queue")
 		show_queue_action.triggered.connect(self.show_queue_window)
 
-		# Create central widget and main layout
+		# Create central widget
 		central_widget = QWidget()
 		self.setCentralWidget(central_widget)
-		main_layout = QHBoxLayout(central_widget)
+		main_layout = QVBoxLayout(central_widget)
+		
+		# Create horizontal splitter
+		splitter = QSplitter(Qt.Horizontal)
+		splitter.setChildrenCollapsible(True)  # Allow panels to be collapsed
+		splitter.setHandleWidth(5)  # Make handles easier to grab
+		splitter.setStyleSheet("""
+			QSplitter::handle {
+				background-color: #CCCCCC;
+				border: 1px solid #999999;
+				width: 4px;
+				margin: 2px;
+			}
+			QSplitter::handle:hover {
+				background-color: #666666;
+			}
+		""")
 		
 		# Setup panels
 		input_panel = self.setup_input_panel()
 		response_panel = self.setup_response_panel()
-		self.jobs_panel = self.setup_jobs_panel()  # Store reference to jobs panel
+		self.jobs_panel = self.setup_jobs_panel()
 		
-		# Add all panels to main layout
-		main_layout.addWidget(input_panel)
-		main_layout.addWidget(response_panel)
-		main_layout.addWidget(self.jobs_panel)
+		# Set size policies to allow shrinking
+		input_panel.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		response_panel.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		self.jobs_panel.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		
+		# Remove any minimum sizes
+		input_panel.setMinimumWidth(0)
+		response_panel.setMinimumWidth(0)
+		self.jobs_panel.setMinimumWidth(0)
+		
+		# Add panels to splitter
+		splitter.addWidget(input_panel)
+		splitter.addWidget(response_panel)
+		splitter.addWidget(self.jobs_panel)
+		
+		# Set initial sizes (adjust these values as needed)
+		splitter.setSizes([300, 400, 500])
+		
+		# Add splitter to main layout
+		main_layout.addWidget(splitter)
 		
 		# Add status bar
 		self.statusBar().showMessage("Ready")
@@ -649,58 +674,60 @@ class SubmitJobWindow(QMainWindow):
 			# Get updated job status
 			job = self.client.get_job(self.current_job.job_id)
 			
+			# Create job dictionary for current job
+			job_dict = {
+				'job_id': job.job_id,
+				'scenario': job.scenario,
+				'subject': job.subject,
+				'body': job.body,
+				'scheduled_time': job.scheduled_time,
+				'started_time': job.started_time,
+				'output': job.output if hasattr(job, 'output') else '',
+				'objectives': str(job.objectives) if hasattr(job, 'objectives') else '{}'
+			}
+
+			# Update jobs_data with current job
+			updated = False
+			for i, existing_job in enumerate(self.jobs_data):
+				if existing_job['job_id'] == job.job_id:
+					self.jobs_data[i] = job_dict
+					updated = True
+					break
+			
+			if not updated:
+				self.jobs_data.append(job_dict)
+
+			# Store as selected_job for response window clicks
+			self.selected_job = job_dict
+
+			# Update display
+			self.apply_filters()
+			self.highlight_job_in_table(job.job_id)
+			
+			# Format response text with HTML
+			response_html = f"Job ID: {job.job_id}<br>"
+			response_html += f"Scenario: {job.scenario}<br>"
+			response_html += f"Subject: {job.subject}<br>"
+			response_html += f"Body: {job.body}<br>"
+			response_html += f"Output: {job.output if hasattr(job, 'output') else ''}<br><br>"
+			
+			if hasattr(job, 'objectives') and job.objectives:
+				response_html += "Objectives:<br>"
+				for objective, result in job.objectives.items():
+					status = "✓" if result else "✗"
+					color = "green" if result else "red"
+					response_html += f'<span style="color: {color}">{status} {objective}</span><br>'
+			
+			self.response_text.setHtml(response_html)
+			
+			# If job is completed
 			if job.is_completed:
 				self.job_check_timer.stop()
-				
-				# Format response text with HTML
-				response_html = f"Job ID: {job.job_id}<br>"
-				response_html += f"Scenario: {job.scenario}<br>"
-				response_html += f"Subject: {job.subject}<br>"
-				response_html += f"Body: {job.body}<br>"
-				response_html += f"Output: {job.output if hasattr(job, 'output') else ''}<br><br>"
-				
-				if job.objectives:
-					response_html += "Objectives:<br>"
-					for objective, result in job.objectives.items():
-						status = "✓" if result else "✗"
-						color = "green" if result else "red"
-						response_html += f'<span style="color: {color}">{status} {objective}</span><br>'
-				
-				self.response_text.setHtml(response_html)
-				
-				# Create job dictionary
-				job_dict = {
-					'job_id': job.job_id,
-					'scenario': job.scenario,
-					'subject': job.subject,
-					'body': job.body,
-					'scheduled_time': job.scheduled_time,
-					'started_time': job.started_time,
-					'output': job.output if hasattr(job, 'output') else '',
-					'objectives': str(job.objectives)
-				}
-
-				# Store as selected_job for response window clicks
-				self.selected_job = job_dict
-
-				# Update jobs_data with the new job
-				updated = False
-				for i, existing_job in enumerate(self.jobs_data):
-					if existing_job['job_id'] == job.job_id:
-						self.jobs_data[i] = job_dict
-						updated = True
-						break
-				
-				if not updated:
-					self.jobs_data.append(job_dict)
-
-				# Clear current job
 				self.current_job = None
-
+				
 				# If queue is empty, refresh all jobs from API
 				if not self.job_queue:
 					try:
-						# Fetch and update all jobs
 						self.fetch_and_update_jobs()
 						save_status = "and queue refreshed"
 					except Exception as e:
@@ -740,16 +767,12 @@ class SubmitJobWindow(QMainWindow):
 						print(f"Error updating job in CSV: {str(e)}")
 						save_status = "but failed to save to file"
 
-				# Refresh the table display
-				self.apply_filters()
-				
-				# Highlight the new/updated job
-				self.highlight_job_in_table(job.job_id)
 				self.statusBar().showMessage(f"Job {job.job_id} completed {save_status}")
 
 		except Exception as e:
 			self.job_check_timer.stop()
 			self.statusBar().showMessage(f"Error checking job status: {str(e)}")
+
 
 
 	def load_jobs(self):
@@ -809,6 +832,11 @@ class SubmitJobWindow(QMainWindow):
 		"""Apply filters to jobs data and update table"""
 		current_index = self.scenario_filter.currentIndex()
 		selected_scenario_value = self.scenario_filter.itemData(current_index)
+		selected_model = self.model_filter.currentText()
+		selected_defense = self.defense_filter.currentText()
+		
+		# Load defense levels data
+		defense_data = load_defense_levels('defense_levels.txt')
 
 		# Get checked objectives
 		include_objectives = [obj for obj, cbs in self.objective_checkboxes.items() if cbs['include'].isChecked()]
@@ -819,6 +847,21 @@ class SubmitJobWindow(QMainWindow):
 			# Apply scenario filter
 			if selected_scenario_value != "all" and selected_scenario_value != job['scenario'].lower():
 				continue
+
+			# Apply defense filters
+			scenario_level = job['scenario'].lower()
+			
+			if selected_model != "All":
+				if selected_model == "Phi3":
+					if scenario_level not in defense_data['Phi3']:
+						continue
+				elif selected_model == "GPT4-o-mini":
+					if scenario_level not in defense_data['GPT4-o-mini']:
+						continue
+						
+			if selected_defense != "All":
+				if scenario_level not in defense_data[selected_defense]:
+					continue
 				
 			# Apply objectives filter
 			if include_objectives or exclude_objectives:
@@ -889,7 +932,54 @@ class SubmitJobWindow(QMainWindow):
 			# Set time columns
 			for time_col in self.time_columns:
 				key = time_col.lower().replace(' ', '_')
-				self.jobs_table.setItem(row, col, QTableWidgetItem(job[key] or ''))
+				timestamp = job[key]
+				if timestamp:
+					# Store original timestamp as data for sorting
+					item = QTableWidgetItem()
+					item.setData(Qt.UserRole, timestamp)
+					
+					if time_col == "Scheduled Time":
+						# Calculate relative time for Scheduled Time
+						try:
+							# Remove fractional seconds and convert T to space
+							clean_timestamp = timestamp.split('.')[0].replace('T', ' ')
+							timestamp_time = time.strptime(clean_timestamp, "%Y-%m-%d %H:%M:%S")
+							timestamp_seconds = time.mktime(timestamp_time)
+							current_time = time.time()
+							diff_seconds = current_time - timestamp_seconds
+							
+							# Format relative time
+							if diff_seconds < 60:
+								display_text = "just now"
+							elif diff_seconds < 3600:
+								minutes = int(diff_seconds / 60)
+								seconds = int(diff_seconds % 60)
+								display_text = f"{minutes}m {seconds}s ago"
+							elif diff_seconds < 86400:
+								hours = int(diff_seconds / 3600)
+								minutes = int((diff_seconds % 3600) / 60)
+								display_text = f"{hours}h {minutes}m ago"
+							else:
+								days = int(diff_seconds / 86400)
+								hours = int((diff_seconds % 86400) / 3600)
+								minutes = int((diff_seconds % 3600) / 60)
+								if hours == 0:
+									display_text = f"{days}d ago"
+								else:
+									display_text = f"{days}d {hours}h {minutes}m ago"
+							
+							item.setText(display_text)
+						except:
+							item.setText(timestamp)  # Fallback to original if parsing fails
+					else:
+						# For Started Time, just show the timestamp
+						item.setText(timestamp)
+					
+					item.setToolTip(timestamp)  # Show full timestamp on hover
+				else:
+					item = QTableWidgetItem('')
+				
+				self.jobs_table.setItem(row, col, item)
 				col += 1
 
 			# Set column widths based on content
@@ -981,7 +1071,34 @@ class SubmitJobWindow(QMainWindow):
 		
 		self.sort_column = column
 		self.sort_combo.setCurrentText(self.jobs_table.horizontalHeaderItem(column).text())
-		self.jobs_table.sortItems(column, self.sort_order)
+		
+		# Custom sorting for timestamp columns
+		header_text = self.jobs_table.horizontalHeaderItem(column).text()
+		if header_text in self.time_columns:
+			# Sort by the stored timestamp data
+			rows = []
+			for row in range(self.jobs_table.rowCount()):
+				item = self.jobs_table.item(row, column)
+				timestamp = item.data(Qt.UserRole) if item else ''
+				rows.append((timestamp, row))
+			
+			# Sort rows based on timestamp
+			rows.sort(key=lambda x: x[0] if x[0] else '', reverse=(self.sort_order == Qt.DescendingOrder))
+			
+			# Reorder table rows
+			for new_row, (_, old_row) in enumerate(rows):
+				# Take all items from old row
+				items = []
+				for col in range(self.jobs_table.columnCount()):
+					items.append(self.jobs_table.takeItem(old_row, col))
+				
+				# Put items in new row
+				for col, item in enumerate(items):
+					if item:
+						self.jobs_table.setItem(new_row, col, item)
+		else:
+			# Use default sorting for other columns
+			self.jobs_table.sortItems(column, self.sort_order)
 
 	def update_submit_button_state(self):
 		"""Update submit button color based on current state"""
@@ -1061,10 +1178,11 @@ class SubmitJobWindow(QMainWindow):
 		jobs_panel = QWidget()
 		jobs_layout = QVBoxLayout(jobs_panel)
 
-		# Filter and sort controls
-		controls_layout = QHBoxLayout()
+		# Create vertical layout for controls
+		controls_layout = QVBoxLayout()
+		controls_layout.setSpacing(5)  # Add some spacing between elements
 		
-		# Sort controls
+		# Sort controls in their own row
 		sort_widget = QWidget()
 		sort_layout = QHBoxLayout(sort_widget)
 		sort_layout.setContentsMargins(0, 0, 0, 0)
@@ -1078,16 +1196,53 @@ class SubmitJobWindow(QMainWindow):
 		sort_layout.addWidget(sort_label)
 		sort_layout.addWidget(self.sort_combo)
 		sort_layout.addWidget(self.sort_order_btn)
+		sort_layout.addStretch()  # Push controls to the left
 		
 		controls_layout.addWidget(sort_widget)
 
+		# Defense filters
+		defense_widget = QWidget()
+		defense_layout = QHBoxLayout(defense_widget)
+		defense_layout.setContentsMargins(0, 0, 0, 0)
 		
-		# Scenario filter
+		# Model filter
+		model_label = QLabel("Model:")
+		self.model_filter = QComboBox()
+		self.model_filter.addItems(["All", "Phi3", "GPT4-o-mini"])
+		self.model_filter.currentTextChanged.connect(self.apply_filters)
+		
+		# Defense type filter  
+		defense_label = QLabel("Defense:")
+		self.defense_filter = QComboBox()
+		self.defense_filter.addItems(["All", "prompt_shield", "task_tracker", "spotlight", "llm_judge", "all defenses"])
+		self.defense_filter.currentTextChanged.connect(self.apply_filters)
+		
+		defense_layout.addWidget(model_label)
+		defense_layout.addWidget(self.model_filter)
+		defense_layout.addWidget(defense_label)
+		defense_layout.addWidget(self.defense_filter)
+		defense_layout.addStretch()
+		
+		controls_layout.addWidget(defense_widget)
+
+		
+		# Scenario filter in its own row
+		scenario_widget = QWidget()
+		scenario_layout = QHBoxLayout(scenario_widget)
+		scenario_layout.setContentsMargins(0, 0, 0, 0)
+		
+		scenario_label = QLabel("Scenario:")
 		self.scenario_filter = QComboBox()
-		self.scenario_filter.addItem("All Scenarios", "all")  # Add default option with data
+		self.scenario_filter.addItem("All Scenarios", "all")
 		for display_name, filter_value in self.scenarios:
 			self.scenario_filter.addItem(display_name, filter_value)
 		self.scenario_filter.currentTextChanged.connect(self.apply_filters)
+		
+		scenario_layout.addWidget(scenario_label)
+		scenario_layout.addWidget(self.scenario_filter)
+		scenario_layout.addStretch()  # Push controls to the left
+		
+		controls_layout.addWidget(scenario_widget)
 		
 		# Objectives filter
 		objectives_widget = QWidget()
@@ -1101,13 +1256,9 @@ class SubmitJobWindow(QMainWindow):
 		self.objective_checkboxes = {}
 		for objective in self.objective_order:
 			obj_layout = QHBoxLayout()
-			obj_layout.setSpacing(4)  # Reduce spacing between checkboxes
+			obj_layout.setSpacing(4)
 			
-			# Add objective name label
-			obj_label = QLabel(objective)
-			obj_layout.addWidget(obj_label)
-			
-			# Include checkbox (green)
+			# Include checkbox with label
 			include_checkbox = QCheckBox()
 			include_checkbox.setToolTip(f"Include results where '{objective}' is successful")
 			include_checkbox.setStyleSheet("""
@@ -1130,12 +1281,11 @@ class SubmitJobWindow(QMainWindow):
 			)
 			obj_layout.addWidget(include_checkbox)
 			
-			# Add "on" label
 			on_label = QLabel("(on)")
-			on_label.setStyleSheet("color: #32CD32;")  # Green text
+			on_label.setStyleSheet("color: #32CD32;")
 			obj_layout.addWidget(on_label)
 			
-			# Exclude checkbox (red)
+			# Exclude checkbox with label
 			exclude_checkbox = QCheckBox()
 			exclude_checkbox.setToolTip(f"Exclude results where '{objective}' is successful")
 			exclude_checkbox.setStyleSheet("""
@@ -1158,23 +1308,29 @@ class SubmitJobWindow(QMainWindow):
 			)
 			obj_layout.addWidget(exclude_checkbox)
 			
-			# Add "off" label
 			off_label = QLabel("(off)")
-			off_label.setStyleSheet("color: #FF4040;")  # Red text
+			off_label.setStyleSheet("color: #FF4040;")
 			obj_layout.addWidget(off_label)
 			
-			obj_layout.addStretch()  # Push checkboxes to the left
+			# Add divider
+			divider = QLabel("|")
+			divider.setStyleSheet("color: #999999;")
+			obj_layout.addWidget(divider)
+			
+			# Objective name
+			obj_label = QLabel(objective)
+			obj_layout.addWidget(obj_label)
+			
+			obj_layout.addStretch()
 			objectives_layout.addLayout(obj_layout)
 			self.objective_checkboxes[objective] = {
 				'include': include_checkbox,
 				'exclude': exclude_checkbox
 			}
 		
-		controls_layout.addWidget(QLabel("Scenario:"))
-		controls_layout.addWidget(self.scenario_filter)
 		controls_layout.addWidget(objectives_widget)
 		
-		# Refresh button
+		# Refresh button in its own row
 		refresh_button = QPushButton("Refresh")
 		refresh_button.clicked.connect(self.fetch_and_update_jobs)
 		controls_layout.addWidget(refresh_button)
