@@ -9,3 +9,6 @@ __pycache__/table_manager.cpython-312.pyc
 __pycache__/ui_components.cpython-312.pyc
 .vscode/extensions.json
 
+*.bak
+__pycache__/submit_job.cpython-312.pyc
+__pycache__/submit_job.cpython-312.pyc

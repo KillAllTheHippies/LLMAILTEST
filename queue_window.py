@@ -5,7 +5,28 @@ from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QApplication
 
 class JobQueueWindow(QDialog):
+    """
+    Dialog window for displaying and managing the job submission queue.
+    
+    This window provides a detailed view of currently queued and processing jobs,
+    including their status, retry counts, and any error responses. It supports
+    copying job information through a context menu and displays tooltips for
+    longer text fields.
+    
+    Attributes:
+        parent: Reference to parent window containing job processor
+        queue_table: QTableWidget displaying queued and processing jobs
+    """
     def __init__(self, parent=None):
+        """
+        Initialize the queue window with table and controls.
+        
+        Sets up the queue table with columns for job details, status tracking,
+        and error handling information. Configures the window size and layout.
+        
+        Args:
+            parent: Parent window reference for modal behavior
+        """
         super().__init__(parent)
         self.setWindowTitle("Job Queue")
         self.resize(1000, 600)  # Make window larger to accommodate new columns
@@ -29,7 +50,17 @@ class JobQueueWindow(QDialog):
         layout.addWidget(close_button)
 
     def update_queue(self, job_queue, current_job):
-        """Update the queue display"""
+        """
+        Update the queue table display with current jobs.
+        
+        Refreshes the table with the current processing job (if any) and all
+        queued jobs. Adds tooltips to text fields and displays retry counts
+        and error responses.
+        
+        Args:
+            job_queue: List of jobs waiting to be processed
+            current_job: Currently processing job object or None
+        """
         self.queue_table.setRowCount(len(job_queue) + (1 if current_job else 0))
         row = 0
         
@@ -80,7 +111,15 @@ class JobQueueWindow(QDialog):
             row += 1
 
     def show_context_menu(self, position):
-        """Show context menu for queue table"""
+        """
+        Display the context menu for copying job information.
+        
+        Creates and shows a context menu with options to copy various parts
+        of the selected jobs' information to the clipboard.
+        
+        Args:
+            position: QPoint object specifying where to display the menu
+        """
         menu = QMenu()
         
         # Add copy actions
@@ -105,7 +144,15 @@ class JobQueueWindow(QDialog):
         menu.exec_(self.queue_table.viewport().mapToGlobal(position))
 
     def get_selected_jobs(self):
-        """Get list of selected jobs from queue table"""
+        """
+        Retrieve data for all selected jobs in the queue table.
+        
+        Extracts job information from selected table rows and returns
+        it in a consistent dictionary format.
+        
+        Returns:
+            list: List of dictionaries containing selected jobs' data
+        """
         selected_rows = set(item.row() for item in self.queue_table.selectedItems())
         selected_jobs = []
         
@@ -121,7 +168,13 @@ class JobQueueWindow(QDialog):
         return selected_jobs
 
     def copy_job_info(self):
-        """Copy complete job info to clipboard"""
+        """
+        Copy complete information for selected jobs to clipboard.
+        
+        Formats and copies comprehensive job information including scenario,
+        subject, body, and status for all selected jobs. Jobs are separated
+        by divider lines in the output.
+        """
         selected_jobs = self.get_selected_jobs()
         if not selected_jobs:
             return
@@ -137,7 +190,12 @@ class JobQueueWindow(QDialog):
         QApplication.clipboard().setText("\n---\n".join(text))
 
     def copy_subject(self):
-        """Copy just the subject(s) to clipboard"""
+        """
+        Copy only the subjects of selected jobs to clipboard.
+        
+        Extracts and copies just the subject lines from selected jobs,
+        with each subject on a new line.
+        """
         selected_jobs = self.get_selected_jobs()
         if not selected_jobs:
             return
@@ -146,7 +204,12 @@ class JobQueueWindow(QDialog):
         QApplication.clipboard().setText("\n".join(subjects))
 
     def copy_body(self):
-        """Copy just the body/bodies to clipboard"""
+        """
+        Copy only the bodies of selected jobs to clipboard.
+        
+        Extracts and copies just the body content from selected jobs,
+        with each body separated by a new line.
+        """
         selected_jobs = self.get_selected_jobs()
         if not selected_jobs:
             return
@@ -155,7 +218,12 @@ class JobQueueWindow(QDialog):
         QApplication.clipboard().setText("\n".join(bodies))
 
     def copy_subject_and_body(self):
-        """Copy subject and body together to clipboard"""
+        """
+        Copy both subject and body of selected jobs to clipboard.
+        
+        Formats and copies the subject and body for each selected job,
+        with entries separated by divider lines.
+        """
         selected_jobs = self.get_selected_jobs()
         if not selected_jobs:
             return

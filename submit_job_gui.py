@@ -8,8 +8,8 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
 from PySide6.QtCore import Qt, QTimer
 
 from submit_job import CompetitionClient
-from job_analyzer import JobAnalyzer
 from queue_window import JobQueueWindow
+
 from ui_components import UIPanels
 from job_processor import JobProcessor
 from table_manager import TableManager
@@ -87,9 +87,9 @@ class SubmitJobWindow(QMainWindow):
         # Initialize core components
         self.client = CompetitionClient("eyJsb2dpbiI6ICJraWxsYWxsdGhlaGlwcGllcyIsICJhcGlfa2V5IjogIjAyNzNhNmZlLTE3OWEtNDEyMi05ODk4LTI1YzE3OTNmN2EyMyJ9")
         self.jobs_file = "jobs_data.csv"
-        self.job_analyzer = JobAnalyzer(csv_path=self.jobs_file)
         
         # Window setup
+
         self.setWindowTitle("Submit Job")
         self.resize(1800, 800)
         
@@ -244,8 +244,30 @@ class SubmitJobWindow(QMainWindow):
                     QMessageBox.warning(self, "Backup Warning", f"Failed to create backup: {str(e)}")
                     return
 
-            # Use JobAnalyzer to fetch and save jobs
-            self.job_analyzer.fetch_and_save_jobs()
+            # Use list_jobs instead of get_jobs
+            response = self.client.list_jobs()
+            if not response:
+                raise Exception("Failed to fetch jobs from API")
+                
+            # Convert jobs to dictionary format
+            jobs_data = [{
+                'job_id': job.job_id,
+                'scenario': job.scenario,
+                'subject': job.subject,
+                'body': job.body,
+                'scheduled_time': job.scheduled_time,
+                'started_time': job.started_time,
+                'completed_time': job.completed_time if hasattr(job, 'completed_time') else None,
+                'output': job.output if hasattr(job, 'output') else '',
+                'objectives': str(job.objectives) if hasattr(job, 'objectives') else '{}'
+            } for job in response]
+
+            # Save to CSV
+            with open(self.jobs_file, mode='w', newline='', encoding='utf-8') as f:
+                writer = csv.DictWriter(f, fieldnames=jobs_data[0].keys())
+                writer.writeheader()
+                writer.writerows(jobs_data)
+
             self.statusBar().showMessage("Successfully updated jobs from API")
             self.load_jobs()
             
@@ -331,11 +353,17 @@ class SubmitJobWindow(QMainWindow):
             self.submit_button.setStyleSheet(button_style % ('#228B22', '#228B22'))  # Forest Green
 
     def use_as_template(self):
-        """Populate input fields with selected job details"""
-        if hasattr(self, 'selected_job'):
-            self.scenario_input.setText(self.selected_job['scenario'])
-            self.subject_input.setText(self.selected_job['subject']) 
-            self.body_input.setText(self.selected_job['body'])
+        """
+        Populate input fields with selected job details.
+        Shows warning if no job is selected.
+        """
+        if not hasattr(self, 'selected_job') or self.selected_job is None:
+            QMessageBox.warning(self, "No Job Selected", "Please select a job from the table first")
+            return
+            
+        self.scenario_input.setText(self.selected_job['scenario'])
+        self.subject_input.setText(self.selected_job['subject']) 
+        self.body_input.setText(self.selected_job['body'])
 
     def show_job_details(self, item):
         """Show selected job details in the response panel"""

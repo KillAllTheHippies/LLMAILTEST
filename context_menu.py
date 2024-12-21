@@ -3,11 +3,38 @@ from PySide6.QtGui import QAction
 from PySide6.QtCore import Qt
 
 class ContextMenuManager:
+    """
+    Manages the right-click context menu functionality for the jobs table.
+    
+    This class handles the creation and management of context menu actions for copying
+    various job information to the clipboard. It provides functionality to copy job details,
+    subjects, bodies, or combinations thereof for one or multiple selected jobs.
+    
+    Attributes:
+        parent: The parent widget (SubmitJobWindow) that contains the jobs table and data
+    """
+
     def __init__(self, parent):
+        """
+        Initialize the ContextMenuManager.
+        
+        Args:
+            parent: Reference to parent window containing jobs_table and jobs_data
+        """
         self.parent = parent
 
+
     def show_context_menu(self, position):
-        """Show context menu for jobs table"""
+        """
+        Display the context menu at the specified position.
+        
+        Creates and shows a context menu with various copy options for the selected job(s).
+        The menu includes options to copy complete job info, subject only, body only,
+        or both subject and body together.
+        
+        Args:
+            position: QPoint object specifying where to display the context menu
+        """
         menu = QMenu()
         
         # Add copy actions
@@ -32,7 +59,15 @@ class ContextMenuManager:
         menu.exec_(self.parent.jobs_table.viewport().mapToGlobal(position))
 
     def get_selected_jobs(self):
-        """Get list of selected jobs from table"""
+        """
+        Retrieve the job data for all selected rows in the jobs table.
+        
+        Iterates through selected table items, extracts job IDs, and finds
+        corresponding job data from the parent's jobs_data list.
+        
+        Returns:
+            list: List of dictionaries containing the data for selected jobs
+        """
         selected_rows = set(item.row() for item in self.parent.jobs_table.selectedItems())
         selected_jobs = []
         
@@ -45,7 +80,13 @@ class ContextMenuManager:
         return selected_jobs
 
     def copy_job_info(self):
-        """Copy complete job info to clipboard"""
+        """
+        Copy complete information for selected jobs to clipboard.
+        
+        Formats and copies comprehensive job information including scenario,
+        subject, body, and objectives (if present) for all selected jobs.
+        Jobs are separated by divider lines in the output.
+        """
         selected_jobs = self.get_selected_jobs()
         if not selected_jobs:
             return
@@ -66,7 +107,12 @@ class ContextMenuManager:
         QApplication.clipboard().setText("\n---\n".join(text))
 
     def copy_subject(self):
-        """Copy just the subject(s) to clipboard"""
+        """
+        Copy only the subjects of selected jobs to clipboard.
+        
+        Extracts and copies just the subject lines from selected jobs,
+        with each subject on a new line.
+        """
         selected_jobs = self.get_selected_jobs()
         if not selected_jobs:
             return
@@ -75,7 +121,12 @@ class ContextMenuManager:
         QApplication.clipboard().setText("\n".join(subjects))
 
     def copy_body(self):
-        """Copy just the body/bodies to clipboard"""
+        """
+        Copy only the bodies of selected jobs to clipboard.
+        
+        Extracts and copies just the body content from selected jobs,
+        with each body separated by a new line.
+        """
         selected_jobs = self.get_selected_jobs()
         if not selected_jobs:
             return
@@ -84,7 +135,12 @@ class ContextMenuManager:
         QApplication.clipboard().setText("\n".join(bodies))
 
     def copy_subject_and_body(self):
-        """Copy subject and body together to clipboard"""
+        """
+        Copy both subject and body of selected jobs to clipboard.
+        
+        Formats and copies the subject and body for each selected job,
+        with entries separated by divider lines.
+        """
         selected_jobs = self.get_selected_jobs()
         if not selected_jobs:
             return

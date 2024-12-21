@@ -1,3 +1,32 @@
+"""
+DEPRECATED: This standalone analysis tool is no longer required for the main program.
+Keeping for reference only.
+
+Original file content follows:
+--------------------------------------------------------------------------------
+
+Job Analysis Tool (Standalone Command-Line Utility)
+
+This script provides command-line analysis capabilities for job data. It is a standalone
+tool and not integrated with the main GUI application. Use this for offline analysis
+of job data and generating reports.
+
+Usage:
+	python job_analyzer.py --fe                # Fetch and store jobs
+	python job_analyzer.py --an                # Analyze stored jobs
+	python job_analyzer.py --fe --an           # Fetch and analyze jobs
+	python job_analyzer.py --fe --fo json      # Use JSON format for storage
+
+This tool provides additional analysis features not available in the main GUI:
+- Success rate analysis by scenario
+- Job completion time analysis
+- Pattern matching between similar jobs
+- Advanced filtering and data export
+"""
+
+# All code below is commented out as this standalone tool is no longer required
+'''
+
 import argparse
 import csv
 import pandas as pd
@@ -470,3 +499,4 @@ if __name__ == "__main__":
 		# Add a small delay to keep the error message visible
 		import time
 		time.sleep(2)
+'''

@@ -5,9 +5,38 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
 from PySide6.QtCore import Qt
 
 class UIPanels:
+    """
+    Static utility class for creating and configuring UI panels in the application.
+    
+    This class provides methods to set up the main UI panels including:
+    - Input panel for job submission
+    - Response panel for displaying job results
+    - Objectives widget for filtering by objective status
+    - Jobs panel containing the main jobs table and filtering controls
+    
+    Each method handles the complete setup of its respective panel including
+    layout, widgets, styling, and signal connections.
+    """
     @staticmethod
     def setup_input_panel(parent):
-        """Setup the input panel with job submission controls"""
+        """
+        Create and configure the job submission input panel.
+        
+        Sets up a panel containing:
+        - Scenario input field
+        - Subject input field
+        - Body text area
+        - Rate limit controls
+        - Submit button
+        - Job count display
+        - Queue status table
+        
+        Args:
+            parent: Parent window containing required attributes and handlers
+            
+        Returns:
+            QWidget: Configured input panel with all components
+        """
         input_panel = QWidget()
         layout = QVBoxLayout(input_panel)
         
@@ -107,7 +136,22 @@ class UIPanels:
 
     @staticmethod
     def setup_response_panel(parent):
-        """Setup the response panel with text display area"""
+        """
+        Create and configure the job response display panel.
+        
+        Sets up a panel containing:
+        - Template button for reusing job data
+        - HTML-capable text area for displaying job details and results
+        
+        The response panel shows detailed information about selected jobs
+        including objectives status with color coding.
+        
+        Args:
+            parent: Parent window containing required attributes and handlers
+            
+        Returns:
+            QWidget: Configured response panel with all components
+        """
         response_panel = QWidget()
         layout = QVBoxLayout(response_panel)
         
@@ -130,7 +174,23 @@ class UIPanels:
 
     @staticmethod
     def setup_objectives_widget(parent):
-        """Setup the objectives widget with Y/N checkboxes"""
+        """
+        Create and configure the objectives filtering widget.
+        
+        Sets up a compact widget containing:
+        - Yes/No checkboxes for each objective
+        - Color-coded success/failure indicators
+        - Objective labels
+        
+        The widget allows filtering jobs based on which objectives were
+        met or failed, supporting multiple simultaneous filters.
+        
+        Args:
+            parent: Parent window containing objective definitions and handlers
+            
+        Returns:
+            QWidget: Configured objectives widget with all filters
+        """
         objectives_widget = QWidget()
         objectives_layout = QVBoxLayout(objectives_widget)
         objectives_layout.setContentsMargins(0, 0, 0, 0)
@@ -170,7 +230,29 @@ class UIPanels:
 
     @staticmethod
     def setup_jobs_panel(parent):
-        """Setup the jobs panel with filtering and table"""
+        """
+        Create and configure the main jobs display panel.
+        
+        Sets up a comprehensive panel containing:
+        - Filtering controls (scenario, model, defense mechanism)
+        - Sort controls with column selection
+        - Objectives filter widget
+        - Jobs table with:
+            - Custom sorting
+            - Multi-select capability
+            - Context menu support
+            - Column auto-sizing
+            - Scroll optimization
+        
+        The jobs panel is the main interface for viewing and managing jobs,
+        providing extensive filtering and sorting capabilities.
+        
+        Args:
+            parent: Parent window containing required attributes and handlers
+            
+        Returns:
+            QWidget: Configured jobs panel with all components
+        """
         jobs_panel = QWidget()
         jobs_layout = QVBoxLayout(jobs_panel)
 

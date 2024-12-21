@@ -6,7 +6,31 @@ from PySide6.QtWidgets import QMessageBox
 from PySide6.QtCore import Qt
 
 class JobProcessor:
+    """
+    Manages job submission, processing, and status tracking for the application.
+    
+    This class handles the entire lifecycle of jobs including queuing, submission,
+    status monitoring, and persistence. It implements rate limiting for API calls
+    and manages the retry mechanism for failed submissions.
+    
+    Attributes:
+        parent: Reference to parent window containing UI components
+        client: CompetitionClient instance for API communication
+        jobs_file: Path to CSV file for persisting job data
+        current_job: Currently processing job instance
+        job_queue: List of pending jobs to be submitted
+        last_submit_time: Timestamp of last job submission
+        submit_rate_limit: Minimum time (seconds) between submissions
+    """
     def __init__(self, parent, client, jobs_file):
+        """
+        Initialize the JobProcessor with required dependencies.
+        
+        Args:
+            parent: Parent window reference for UI updates
+            client: CompetitionClient instance for API calls
+            jobs_file: Path to CSV file for job persistence
+        """
         self.parent = parent
         self.client = client
         self.jobs_file = jobs_file
@@ -16,7 +40,20 @@ class JobProcessor:
         self.submit_rate_limit = 33  # Initial rate limit of 33 seconds
 
     def submit_job(self, scenario, subject, body):
-        """Submit a new job to the queue"""
+        """
+        Queue a new job for submission.
+        
+        Validates input parameters and adds the job to the processing queue.
+        The job is also persisted to CSV storage for durability.
+        
+        Args:
+            scenario: Target scenario identifier
+            subject: Email subject line
+            body: Email body content
+            
+        Returns:
+            bool: True if job was successfully queued, False otherwise
+        """
         try:
             # Validate inputs
             if not scenario or not subject or not body:
@@ -50,7 +87,13 @@ class JobProcessor:
             return False
 
     def process_job_queue(self):
-        """Process queued jobs respecting rate limit"""
+        """
+        Process the next job in the queue respecting rate limits.
+        
+        Attempts to submit the next queued job if rate limiting conditions allow.
+        Handles rate limit errors by implementing exponential backoff and retries.
+        Updates UI with submission status and manages rate limit adjustments.
+        """
         if not self.job_queue:
             return
 
@@ -114,7 +157,13 @@ class JobProcessor:
             self.parent.statusBar().showMessage("Failed to submit job")
 
     def check_job_status(self):
-        """Check status of current job"""
+        """
+        Check and update the status of the currently processing job.
+        
+        Polls the API for current job status, updates the UI with progress,
+        and handles job completion. On completion, updates persistent storage
+        and optionally refreshes the job list from the API.
+        """
         try:
             if not self.current_job:
                 self.parent.job_check_timer.stop()
@@ -197,7 +246,15 @@ class JobProcessor:
             self.parent.statusBar().showMessage(f"Error checking job status: {str(e)}")
 
     def save_queue_to_csv(self):
-        """Save all jobs including queued ones to CSV file"""
+        """
+        Save all jobs including queued ones to the CSV file.
+        
+        Combines completed jobs with queued jobs and saves them to persistent
+        storage. Updates the parent's jobs_data and refreshes the UI display.
+        
+        Returns:
+            bool: True if save was successful, False otherwise
+        """
         try:
             # Get all completed jobs (filter out any previous queued jobs)
             completed_jobs = [job for job in self.parent.jobs_data if job['job_id'] != 'queued']

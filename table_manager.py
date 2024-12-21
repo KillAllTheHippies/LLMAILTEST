@@ -4,7 +4,29 @@ from PySide6.QtCore import Qt
 from defense_filters import load_defense_levels
 
 class TableManager:
+    """
+    Manages the display, filtering, and sorting of the jobs table in the application.
+    
+    This class handles all table-related operations including updating table content,
+    applying filters, sorting data, and managing column layouts. It provides a centralized
+    way to handle table operations while maintaining consistent formatting and behavior.
+    
+    Attributes:
+        parent: Reference to parent window containing the jobs table and related UI components
+        sort_column: Index of the currently sorted column
+        sort_order: Current sort order (Qt.AscendingOrder or Qt.DescendingOrder)
+        base_columns: List of primary columns that appear at the start of the table
+        base_columns_after: List of columns that appear after objective columns
+        time_columns: List of columns containing timestamp information
+    """
+
     def __init__(self, parent):
+        """
+        Initialize the TableManager with required dependencies.
+        
+        Args:
+            parent: Parent window reference containing jobs_table and related components
+        """
         self.parent = parent
         self.sort_column = 0
         self.sort_order = Qt.AscendingOrder
@@ -13,7 +35,17 @@ class TableManager:
         self.time_columns = ["Scheduled Time", "Started Time"]
 
     def apply_filters(self):
-        """Apply filters to jobs data and update table"""
+        """
+        Apply all active filters to the jobs data and update the table display.
+        
+        Processes multiple filter types including:
+        - Scenario selection filter
+        - Model type filter (Phi3/GPT4)
+        - Defense mechanism filter
+        - Objective status filters (success/failure)
+        
+        Updates the table with filtered results and refreshes the job count display.
+        """
         current_index = self.parent.scenario_filter.currentIndex()
         selected_scenario_value = self.parent.scenario_filter.itemData(current_index)
         selected_model = self.parent.model_filter.currentText()
@@ -67,7 +99,19 @@ class TableManager:
         self.update_table_with_jobs(filtered_jobs)
 
     def update_table_with_jobs(self, filtered_jobs):
-        """Update table with filtered jobs"""
+        """
+        Update the table display with the filtered job data.
+        
+        Handles the complete table update process including:
+        - Setting row and column counts
+        - Updating job count display
+        - Populating cells with job data
+        - Formatting timestamps
+        - Setting column widths
+        
+        Args:
+            filtered_jobs: List of job dictionaries that passed the active filters
+        """
         self.parent.jobs_table.setRowCount(len(filtered_jobs))
         
         # Update job count label
@@ -185,7 +229,18 @@ class TableManager:
             self.parent.jobs_table.setColumnWidth(col, width)
 
     def sort_table(self, column, update_combo=True):
-        """Sort table by clicked column header"""
+        """
+        Sort the table by the specified column.
+        
+        Implements intelligent sorting for different column types:
+        - Uses stored timestamp data for time columns
+        - Handles text-based sorting for other columns
+        - Maintains sort order state and updates UI indicators
+        
+        Args:
+            column: Index of column to sort by
+            update_combo: Whether to update the sort combo box selection
+        """
         # Get header text at the start to avoid scope issues
         header_text = self.parent.jobs_table.horizontalHeaderItem(column).text()
         
@@ -234,7 +289,12 @@ class TableManager:
                     self.parent.jobs_table.setItem(new_row, col, item)
 
     def toggle_sort_order(self):
-        """Toggle between ascending and descending sort order"""
+        """
+        Toggle the current sort order between ascending and descending.
+        
+        Updates the sort order indicator and refreshes the table sort
+        while maintaining the current sort column selection.
+        """
         self.sort_order = Qt.DescendingOrder if self.sort_order == Qt.AscendingOrder else Qt.AscendingOrder
         self.parent.sort_order_btn.setText("↑" if self.sort_order == Qt.AscendingOrder else "↓")
         # Call sort_table with update_combo=False to maintain current column selection
