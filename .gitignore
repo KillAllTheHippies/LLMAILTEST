@@ -8,3 +8,4 @@ __pycache__/queue_window.cpython-312.pyc
 __pycache__/table_manager.cpython-312.pyc
 __pycache__/ui_components.cpython-312.pyc
 .vscode/extensions.json
+jobs_data.csv

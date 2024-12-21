@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                                       QLineEdit, QTextEdit, QPushButton, QComboBox,
                                       QCheckBox, QTableWidget, QTableWidgetItem,
-                                      QSizePolicy)
+                                      QSizePolicy, QFrame)
 from PySide6.QtCore import Qt
 
 class UIPanels:
@@ -36,7 +36,7 @@ class UIPanels:
         # Rate limit input
         rate_layout = QHBoxLayout()
         rate_label = QLabel("Rate Limit (seconds):")
-        parent.rate_limit_input = QLineEdit(str(parent.submit_rate_limit))
+        parent.rate_limit_input = QLineEdit(str(parent.job_processor.submit_rate_limit))
         parent.rate_limit_input.setFixedWidth(50)
         parent.rate_limit_input.editingFinished.connect(parent.update_rate_limit)
         
@@ -95,6 +95,8 @@ class UIPanels:
         parent.queue_table.setMaximumHeight(200)
         layout.addWidget(parent.queue_table)
 
+
+
         layout.addStretch()
         
         # Set size policy
@@ -127,69 +129,78 @@ class UIPanels:
         return response_panel
 
     @staticmethod
+    def setup_objectives_widget(parent):
+        """Setup the objectives widget with Y/N checkboxes"""
+        objectives_widget = QWidget()
+        objectives_layout = QVBoxLayout(objectives_widget)
+        objectives_layout.setContentsMargins(0, 0, 0, 0)
+        objectives_layout.setSpacing(2)  # Reduced spacing
+        
+        # Create checkbox pairs for each objective
+        parent.objective_checkboxes = {}
+        for objective in parent.objective_order:
+            obj_widget = QWidget()
+            obj_layout = QHBoxLayout(obj_widget)
+            obj_layout.setContentsMargins(0, 0, 0, 0)
+            obj_layout.setSpacing(2)
+            
+            yes_cb = QCheckBox("Y")
+            no_cb = QCheckBox("N")
+            
+            yes_cb.setStyleSheet("QCheckBox { color: green; }")
+            no_cb.setStyleSheet("QCheckBox { color: red; }")
+            
+            yes_cb.stateChanged.connect(parent.apply_filters)
+            no_cb.stateChanged.connect(parent.apply_filters)
+            
+            obj_layout.addWidget(yes_cb)
+            obj_layout.addWidget(no_cb)
+            obj_layout.addWidget(QLabel("|"))
+            obj_layout.addWidget(QLabel(objective))
+            obj_layout.addStretch()
+            
+            parent.objective_checkboxes[objective] = {
+                'yes': yes_cb,
+                'no': no_cb
+            }
+            
+            objectives_layout.addWidget(obj_widget)
+            
+        return objectives_widget
+
+    @staticmethod
     def setup_jobs_panel(parent):
         """Setup the jobs panel with filtering and table"""
         jobs_panel = QWidget()
         jobs_layout = QVBoxLayout(jobs_panel)
 
-        # Controls layout
-        controls_layout = QVBoxLayout()
-        controls_layout.setSpacing(5)
-        
-        # Sort controls
-        sort_widget = QWidget()
-        sort_layout = QHBoxLayout(sort_widget)
-        sort_layout.setContentsMargins(0, 0, 0, 0)
-        
-        sort_label = QLabel("Sort by:")
-        parent.sort_combo = QComboBox()
-        # Initialize sort combo with all possible columns
-        initial_headers = parent.base_columns + parent.objective_order + parent.base_columns_after + parent.time_columns
-        parent.sort_combo.addItems(initial_headers)
-        parent.sort_combo.setCurrentText("Started Time")  # Set default sort
-        parent.sort_combo.currentTextChanged.connect(parent.handle_sort_change)
-        
-        parent.sort_order_btn = QPushButton("↓")
-        parent.sort_order_btn.setFixedWidth(30)
-        parent.sort_order_btn.clicked.connect(parent.toggle_sort_order)
-        
-        sort_layout.addWidget(sort_label)
-        sort_layout.addWidget(parent.sort_combo)
-        sort_layout.addWidget(parent.sort_order_btn)
-        sort_layout.addStretch()
-        
-        controls_layout.addWidget(sort_widget)
+        # Controls layout - main container with horizontal layout
+        controls_container = QWidget()
+        controls_layout = QHBoxLayout(controls_container)
+        controls_layout.setSpacing(10)
+        controls_layout.setContentsMargins(0, 0, 0, 0)
 
-        # Defense filters
-        defense_widget = QWidget()
-        defense_layout = QHBoxLayout(defense_widget)
-        defense_layout.setContentsMargins(0, 0, 0, 0)
+        # Filters container
+        filters_container = QWidget()
+        filters_layout = QVBoxLayout(filters_container)
+        filters_layout.setSpacing(2)
+        filters_layout.setContentsMargins(0, 0, 0, 0)
         
-        model_label = QLabel("Model:")
-        parent.model_filter = QComboBox()
-        parent.model_filter.addItems(["All", "Phi3", "GPT4-o-mini"])
-        parent.model_filter.currentTextChanged.connect(parent.apply_filters)
+        # Left side filters container
+        left_filters = QWidget()
+        left_layout = QVBoxLayout(left_filters)
+        left_layout.setSpacing(1)  # Minimal spacing between elements
+        left_layout.setContentsMargins(0, 0, 0, 0)
         
-        defense_label = QLabel("Defense:")
-        parent.defense_filter = QComboBox()
-        parent.defense_filter.addItems(["All", "prompt_shield", "task_tracker", "spotlight", "llm_judge", "all defenses"])
-        parent.defense_filter.currentTextChanged.connect(parent.apply_filters)
-        
-        defense_layout.addWidget(model_label)
-        defense_layout.addWidget(parent.model_filter)
-        defense_layout.addWidget(defense_label)
-        defense_layout.addWidget(parent.defense_filter)
-        defense_layout.addStretch()
-        
-        controls_layout.addWidget(defense_widget)
-
         # Scenario filter
         scenario_widget = QWidget()
         scenario_layout = QHBoxLayout(scenario_widget)
         scenario_layout.setContentsMargins(0, 0, 0, 0)
+        scenario_layout.setSpacing(2)  # Minimal spacing between label and combobox
         
         scenario_label = QLabel("Scenario:")
         parent.scenario_filter = QComboBox()
+        parent.scenario_filter.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         parent.scenario_filter.addItem("All Scenarios", "all")
         for display_name, filter_value in parent.scenarios:
             parent.scenario_filter.addItem(display_name, filter_value)
@@ -199,16 +210,104 @@ class UIPanels:
         scenario_layout.addWidget(parent.scenario_filter)
         scenario_layout.addStretch()
         
-        controls_layout.addWidget(scenario_widget)
-        
-        # Add refresh button
-        refresh_button = QPushButton("Refresh")
-        refresh_button.clicked.connect(parent.fetch_and_update_jobs)
-        controls_layout.addWidget(refresh_button)
-        
-        jobs_layout.addLayout(controls_layout)
+        left_layout.addWidget(scenario_widget)
 
-        # Jobs table
+        # Sort controls
+        sort_widget = QWidget()
+        sort_layout = QHBoxLayout(sort_widget)
+        sort_layout.setContentsMargins(0, 0, 0, 0)
+        sort_layout.setSpacing(2)
+        
+        sort_label = QLabel("Sort by:")
+        parent.sort_combo = QComboBox()
+        parent.sort_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+        initial_headers = parent.base_columns + parent.objective_order + parent.base_columns_after + parent.time_columns
+        parent.sort_combo.addItems(initial_headers)
+        parent.sort_combo.setCurrentText("Started Time")
+        parent.sort_combo.currentTextChanged.connect(parent.handle_sort_change)
+        
+        parent.sort_order_btn = QPushButton("↓")
+        parent.sort_order_btn.setFixedWidth(20)  # Smaller width
+        parent.sort_order_btn.setFixedHeight(20)  # Match height to combobox
+        parent.sort_order_btn.clicked.connect(parent.toggle_sort_order)
+        
+        sort_layout.addWidget(sort_label)
+        sort_layout.addWidget(parent.sort_combo)
+        sort_layout.addWidget(parent.sort_order_btn)
+        sort_layout.addStretch()
+        
+        left_layout.addWidget(sort_widget)
+
+        # Model filter
+        model_widget = QWidget()
+        model_layout = QHBoxLayout(model_widget)
+        model_layout.setContentsMargins(0, 0, 0, 0)
+        model_layout.setSpacing(2)
+        
+        model_label = QLabel("Model:")
+        parent.model_filter = QComboBox()
+        parent.model_filter.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+        parent.model_filter.addItems(["All", "Phi3", "GPT4-o-mini"])
+        parent.model_filter.currentTextChanged.connect(parent.apply_filters)
+        
+        model_layout.addWidget(model_label)
+        model_layout.addWidget(parent.model_filter)
+        model_layout.addStretch()
+        
+        left_layout.addWidget(model_widget)
+
+        # Defense filter
+        defense_widget = QWidget()
+        defense_layout = QHBoxLayout(defense_widget)
+        defense_layout.setContentsMargins(0, 0, 0, 0)
+        defense_layout.setSpacing(2)
+        
+        defense_label = QLabel("Defense:")
+        parent.defense_filter = QComboBox()
+        parent.defense_filter.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+        parent.defense_filter.addItems(["All", "prompt_shield", "task_tracker", "spotlight", "llm_judge", "all defenses"])
+        parent.defense_filter.currentTextChanged.connect(parent.apply_filters)
+        
+        defense_layout.addWidget(defense_label)
+        defense_layout.addWidget(parent.defense_filter)
+        defense_layout.addStretch()
+        
+        left_layout.addWidget(defense_widget)
+        
+        # Add filters to container
+        filters_layout.addWidget(left_filters)
+        
+        # Add refresh button at top
+        refresh_button = QPushButton("Refresh")
+        refresh_button.setFixedHeight(20)  # Make button smaller
+        refresh_button.clicked.connect(parent.fetch_and_update_jobs)
+        filters_layout.addWidget(refresh_button)
+        
+        # Add filters container to main controls
+        controls_layout.addWidget(filters_container)
+
+        # Add vertical divider
+        divider = QFrame()
+        divider.setFrameShape(QFrame.VLine)
+        divider.setFrameShadow(QFrame.Sunken)
+        divider.setStyleSheet("QFrame { color: #999999; }")
+        controls_layout.addWidget(divider)
+
+        # Add objectives widget
+        objectives_widget = UIPanels.setup_objectives_widget(parent)
+        objectives_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+        controls_layout.addWidget(objectives_widget)
+
+        
+        # Add stretch to ensure components stay left-aligned
+        controls_layout.addStretch()
+        
+        # Add all controls to main layout
+        jobs_layout.addWidget(controls_container)
+
+
+
+        # Jobs table with custom sorting
         parent.jobs_table = QTableWidget()
         parent.jobs_table.setColumnCount(len(parent.base_columns))
         parent.jobs_table.setHorizontalHeaderLabels(parent.base_columns)
@@ -219,6 +318,10 @@ class UIPanels:
         parent.jobs_table.horizontalHeader().sectionClicked.connect(parent.sort_table)
         parent.jobs_table.setHorizontalScrollMode(QTableWidget.ScrollMode.ScrollPerPixel)
         parent.jobs_table.setVerticalScrollMode(QTableWidget.ScrollMode.ScrollPerPixel)
+        # Disable built-in sorting and ensure headers are clickable
+        parent.jobs_table.setSortingEnabled(False)
+        parent.jobs_table.horizontalHeader().setSortIndicatorShown(True)
+        parent.jobs_table.horizontalHeader().setSectionsClickable(True)
         
         jobs_layout.addWidget(parent.jobs_table)
         

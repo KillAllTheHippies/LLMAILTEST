@@ -4,7 +4,7 @@ import csv
 import html
 import time
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
-                              QSplitter, QMessageBox, QTextEdit)
+                              QSplitter, QMessageBox, QTextEdit, QTableWidgetItem)
 from PySide6.QtCore import Qt, QTimer
 
 from submit_job import CompetitionClient
@@ -97,13 +97,10 @@ class SubmitJobWindow(QMainWindow):
         self.jobs_data = []
         self.selected_job = None
         self.objective_columns = set()
-        self.current_job = None
-        self.job_queue = []
-        self.last_submit_time = 0
-        self.submit_rate_limit = 33
 
         # Initialize managers
-        self.job_processor = JobProcessor(self, self.client, self.jobs_file)
+        self.job_processor = JobProcessor(self, self.client, self.jobs_file) 
+
         self.table_manager = TableManager(self)
         self.context_menu_manager = ContextMenuManager(self)
         
@@ -130,11 +127,9 @@ class SubmitJobWindow(QMainWindow):
         # Add menu actions
         refresh_action = file_menu.addAction("Refresh")
         refresh_action.triggered.connect(self.fetch_and_update_jobs)
-        
-        show_queue_action = view_menu.addAction("Show Queue")
-        show_queue_action.triggered.connect(self.show_queue_window)
 
         # Create central widget
+
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QVBoxLayout(central_widget)
@@ -183,21 +178,28 @@ class SubmitJobWindow(QMainWindow):
         body = self.body_input.toPlainText()
         
         if self.job_processor.submit_job(scenario, subject, body):
-            self.show_queue_window()
+            self.update_queue_display()
 
-    def show_queue_window(self):
-        """Show the queue window"""
-        if not hasattr(self, 'queue_window') or not self.queue_window:
-            self.queue_window = JobQueueWindow(self)
-        self.queue_window.update_queue(self.job_processor.job_queue, self.job_processor.current_job)
-        self.queue_window.show()
-        self.queue_window.raise_()
-        self.queue_window.activateWindow()
-
-    def update_queue_window(self):
-        """Update the queue window if it exists"""
-        if hasattr(self, 'queue_window') and self.queue_window:
-            self.queue_window.update_queue(self.job_processor.job_queue, self.job_processor.current_job)
+    def update_queue_display(self):
+        """Update the queue table with current jobs"""
+        self.queue_table.setRowCount(len(self.job_processor.job_queue))
+        
+        for row, job in enumerate(self.job_processor.job_queue):
+            # Scenario
+            self.queue_table.setItem(row, 0, QTableWidgetItem(job['scenario']))
+            # Subject
+            self.queue_table.setItem(row, 1, QTableWidgetItem(job['subject']))
+            # Body
+            self.queue_table.setItem(row, 2, QTableWidgetItem(job['body']))
+            # Status
+            status = "Processing" if job == self.job_processor.current_job else "Queued"
+            self.queue_table.setItem(row, 3, QTableWidgetItem(status))
+            # Position
+            self.queue_table.setItem(row, 4, QTableWidgetItem(str(row + 1)))
+            # Retries
+            self.queue_table.setItem(row, 5, QTableWidgetItem(str(job.get('retries', 0))))
+            # Last Response
+            self.queue_table.setItem(row, 6, QTableWidgetItem(job.get('last_response', '')))
 
     def load_jobs(self):
         """Load jobs from CSV file"""
@@ -263,12 +265,12 @@ class SubmitJobWindow(QMainWindow):
         try:
             new_limit = int(self.rate_limit_input.text())
             if new_limit > 0:
-                self.submit_rate_limit = new_limit
                 self.job_processor.submit_rate_limit = new_limit
             else:
-                self.rate_limit_input.setText(str(self.submit_rate_limit))
+                self.rate_limit_input.setText(str(self.job_processor.submit_rate_limit))
         except ValueError:
-            self.rate_limit_input.setText(str(self.submit_rate_limit))
+            self.rate_limit_input.setText(str(self.job_processor.submit_rate_limit))
+
 
     def update_submit_counter(self):
         """Update the submission counter"""
@@ -277,24 +279,25 @@ class SubmitJobWindow(QMainWindow):
         jobs_count = f"[{filtered_count} of {total_jobs} jobs] - "
         
         self.update_submit_button_state()
+        self.update_queue_display()
         
         if not self.job_processor.job_queue:
             self.statusBar().showMessage(f"{jobs_count}Ready - Next submission available")
             return
             
-        current_time = time.time()
-        time_since_last = current_time - self.job_processor.last_submit_time
+        time_since_last = time.time() - self.job_processor.last_submit_time
         if time_since_last < self.job_processor.submit_rate_limit:
             remaining = int(self.job_processor.submit_rate_limit - time_since_last)
             queue_status = f"{jobs_count}Queue: {len(self.job_processor.job_queue)} job(s) - Next submission in {remaining}s"
             if self.job_processor.current_job:
-                queue_status = f"{jobs_count}Processing job {self.job_processor.current_job.job_id} - Queue: {len(self.job_processor.job_queue)} job(s) - Next submission in {remaining}s"
+                queue_status = f"{jobs_count}Processing job {self.job_processor.current_job.job_id} - {queue_status}"
             self.statusBar().showMessage(queue_status)
         else:
             queue_msg = f"{jobs_count}Queue: {len(self.job_processor.job_queue)} job(s) - Ready to submit"
             if self.job_processor.current_job:
                 queue_msg = f"{jobs_count}Processing job {self.job_processor.current_job.job_id} - {queue_msg}"
             self.statusBar().showMessage(queue_msg)
+
 
     def update_submit_button_state(self):
         """Update submit button color based on current state"""
@@ -315,8 +318,8 @@ class SubmitJobWindow(QMainWindow):
             self.submit_button.setStyleSheet(button_style % ('#228B22', '#228B22'))  # Forest Green
             return
             
-        current_time = time.time()
-        time_since_last = current_time - self.job_processor.last_submit_time
+        time_since_last = time.time() - self.job_processor.last_submit_time
+
         
         if time_since_last < self.job_processor.submit_rate_limit:
             # Check if it's rate limited or just counting down
@@ -384,14 +387,14 @@ class SubmitJobWindow(QMainWindow):
 
     def toggle_sort_order(self):
         self.table_manager.toggle_sort_order()
+        self.table_manager.sort_table(self.table_manager.sort_column)
 
     def handle_sort_change(self, column_name):
         """Handle sort column selection change"""
         # Find column index
         for i in range(self.jobs_table.columnCount()):
             if self.jobs_table.horizontalHeaderItem(i).text() == column_name:
-                self.sort_column = i
-                self.jobs_table.sortItems(i, self.sort_order)
+                self.table_manager.sort_table(i)
                 break
 
     def show_context_menu(self, position):

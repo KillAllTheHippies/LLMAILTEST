@@ -23,8 +23,8 @@ class TableManager:
         defense_data = load_defense_levels('defense_levels.txt')
 
         # Get checked objectives
-        include_objectives = [obj for obj, cbs in self.parent.objective_checkboxes.items() if cbs['include'].isChecked()]
-        exclude_objectives = [obj for obj, cbs in self.parent.objective_checkboxes.items() if cbs['exclude'].isChecked()]
+        yes_objectives = [obj for obj, cbs in self.parent.objective_checkboxes.items() if cbs['yes'].isChecked()]
+        no_objectives = [obj for obj, cbs in self.parent.objective_checkboxes.items() if cbs['no'].isChecked()]
         
         filtered_jobs = []
         for job in self.parent.jobs_data:
@@ -48,17 +48,17 @@ class TableManager:
                     continue
                 
             # Apply objectives filter
-            if include_objectives or exclude_objectives:
+            if yes_objectives or no_objectives:
                 if not job['objectives']:
                     continue
                 objectives = eval(job['objectives'])
                 
-                # Check included objectives
-                if include_objectives and not all(objectives.get(obj, False) for obj in include_objectives):
+                # Check yes objectives (must be true)
+                if yes_objectives and not all(objectives.get(obj, False) for obj in yes_objectives):
                     continue
                     
-                # Check excluded objectives
-                if exclude_objectives and any(objectives.get(obj, False) for obj in exclude_objectives):
+                # Check no objectives (must be false)
+                if no_objectives and not all(not objectives.get(obj, False) for obj in no_objectives):
                     continue
                     
             filtered_jobs.append(job)
@@ -196,38 +196,40 @@ class TableManager:
             self.parent.sort_order_btn.setText("↓")
         
         self.sort_column = column
-        self.parent.sort_combo.setCurrentText(self.parent.jobs_table.horizontalHeaderItem(column).text())
-        
-        # Custom sorting for timestamp columns
         header_text = self.parent.jobs_table.horizontalHeaderItem(column).text()
-        if header_text in self.time_columns:
-            # Sort by the stored timestamp data
-            rows = []
-            for row in range(self.parent.jobs_table.rowCount()):
-                item = self.parent.jobs_table.item(row, column)
-                timestamp = item.data(Qt.UserRole) if item else ''
-                rows.append((timestamp, row))
-            
-            # Sort rows based on timestamp
-            rows.sort(key=lambda x: x[0] if x[0] else '', reverse=(self.sort_order == Qt.DescendingOrder))
-            
-            # Reorder table rows
-            for new_row, (_, old_row) in enumerate(rows):
-                # Take all items from old row
-                items = []
-                for col in range(self.parent.jobs_table.columnCount()):
-                    items.append(self.parent.jobs_table.takeItem(old_row, col))
-                
-                # Put items in new row
-                for col, item in enumerate(items):
-                    if item:
-                        self.parent.jobs_table.setItem(new_row, col, item)
-        else:
-            # Use default sorting for other columns
-            self.parent.jobs_table.sortItems(column, self.sort_order)
+        self.parent.sort_combo.setCurrentText(header_text)
+        
+        # Get all rows data
+        rows_data = []
+        for row in range(self.parent.jobs_table.rowCount()):
+            row_items = []
+            for col in range(self.parent.jobs_table.columnCount()):
+                item = self.parent.jobs_table.item(row, col)
+                if item:
+                    if header_text in self.time_columns and col == column:
+                        # Use stored timestamp data for sorting time columns
+                        sort_key = item.data(Qt.UserRole) if item.data(Qt.UserRole) else ''
+                    else:
+                        sort_key = item.text()
+                    row_items.append((item.clone(), sort_key if col == column else None))
+                else:
+                    row_items.append((None, ''))
+            rows_data.append((row_items, row))
+        
+        # Sort rows based on the sort key
+        rows_data.sort(
+            key=lambda x: x[0][column][1] if x[0][column][0] else '',
+            reverse=(self.sort_order == Qt.DescendingOrder)
+        )
+        
+        # Reapply sorted data to table
+        for new_row, (row_items, _) in enumerate(rows_data):
+            for col, (item, _) in enumerate(row_items):
+                if item:
+                    self.parent.jobs_table.setItem(new_row, col, item)
 
     def toggle_sort_order(self):
         """Toggle between ascending and descending sort order"""
         self.sort_order = Qt.DescendingOrder if self.sort_order == Qt.AscendingOrder else Qt.AscendingOrder
         self.parent.sort_order_btn.setText("↑" if self.sort_order == Qt.AscendingOrder else "↓")
-        self.parent.jobs_table.sortItems(self.sort_column, self.sort_order)
+        self.sort_table(self.sort_column)
