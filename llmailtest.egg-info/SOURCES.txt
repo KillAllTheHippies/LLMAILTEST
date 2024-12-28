@@ -1,0 +1,8 @@
+README.md
+pyproject.toml
+setup.py
+llmailtest.egg-info/PKG-INFO
+llmailtest.egg-info/SOURCES.txt
+llmailtest.egg-info/dependency_links.txt
+llmailtest.egg-info/requires.txt
+llmailtest.egg-info/top_level.txt

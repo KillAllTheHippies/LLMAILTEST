@@ -65,7 +65,7 @@ class UIPanels:
         # Rate limit input
         rate_layout = QHBoxLayout()
         rate_label = QLabel("Rate Limit (seconds):")
-        parent.rate_limit_input = QLineEdit(str(parent.job_processor.submit_rate_limit))
+        parent.rate_limit_input = QLineEdit("30")  # Initialize to 30 seconds
         parent.rate_limit_input.setFixedWidth(50)
         parent.rate_limit_input.editingFinished.connect(parent.update_rate_limit)
         

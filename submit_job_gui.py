@@ -4,16 +4,19 @@ import csv
 import html
 import time
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
-                              QSplitter, QMessageBox, QTextEdit, QTableWidgetItem)
+                              QSplitter, QMessageBox, QTextEdit, QTableWidgetItem,
+                              QTableWidget, QLineEdit, QPushButton, QLabel, 
+                              QCheckBox, QHBoxLayout, QFrame)
 from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QAction
 
-from submit_job import CompetitionClient
-from queue_window import JobQueueWindow
+# Update imports to use local modules
+from src.llmailtest.client.submit_job import CompetitionClient
+from src.llmailtest.ui.components import UIPanels
+from src.llmailtest.ui.job_processor import JobProcessor
+from src.llmailtest.ui.table_manager import TableManager
+from src.llmailtest.ui.context_menu import ContextMenuManager
 
-from ui_components import UIPanels
-from job_processor import JobProcessor
-from table_manager import TableManager
-from context_menu import ContextMenuManager
 
 class SubmitJobWindow(QMainWindow):
     """
@@ -144,30 +147,15 @@ class SubmitJobWindow(QMainWindow):
         self.load_jobs()
 
     def setup_ui(self):
-        """
-        Configure and layout the main UI components.
-        
-        Creates:
-        - Menu bar with File and View menus
-        - Three-panel horizontal split layout
-        - Input panel for job submission
-        - Response panel for job details
-        - Jobs panel for job history table
-        - Status bar for system messages
-        
-        The panels are arranged in a QSplitter for adjustable sizing.
-        """
         # Create menu bar
         menubar = self.menuBar()
         file_menu = menubar.addMenu("File")
-        view_menu = menubar.addMenu("View")
         
         # Add menu actions
         refresh_action = file_menu.addAction("Refresh")
         refresh_action.triggered.connect(self.fetch_and_update_jobs)
 
         # Create central widget
-
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QVBoxLayout(central_widget)
@@ -191,7 +179,69 @@ class SubmitJobWindow(QMainWindow):
         # Setup panels using UIPanels class
         input_panel = UIPanels.setup_input_panel(self)
         response_panel = UIPanels.setup_response_panel(self)
-        self.jobs_panel = UIPanels.setup_jobs_panel(self)
+
+        # Setup jobs panel
+        self.jobs_panel = QWidget()
+        jobs_layout = QVBoxLayout(self.jobs_panel)
+
+        # Create objective filters container
+        objective_filters = QWidget()
+        objective_filters_layout = QVBoxLayout(objective_filters)
+        objective_filters_layout.setAlignment(Qt.AlignLeft)
+
+        # Add header labels
+        header_widget = QWidget()
+        header_layout = QHBoxLayout(header_widget)
+        header_layout.setContentsMargins(0, 0, 0, 0)
+        header_layout.setAlignment(Qt.AlignLeft)
+
+        # Add labels for True/False columns
+        true_label = QLabel("Pass")
+        true_label.setStyleSheet("color: green;")
+        false_label = QLabel("Fail")
+        false_label.setStyleSheet("color: red;")
+        header_layout.addWidget(true_label)
+        header_layout.addWidget(false_label)
+        header_layout.addWidget(QLabel("Objective"))
+        header_layout.addStretch()
+
+        objective_filters_layout.addWidget(header_widget)
+
+        # Add objective checkboxes
+        for objective in self.objective_order:
+            objective_row = QWidget()
+            row_layout = QHBoxLayout(objective_row)
+            row_layout.setContentsMargins(0, 0, 0, 0)
+            row_layout.setAlignment(Qt.AlignLeft)
+            
+            # True checkbox (green)
+            true_checkbox = QCheckBox()
+            true_checkbox.setStyleSheet("QCheckBox::indicator:checked { background-color: green; }")
+            row_layout.addWidget(true_checkbox)
+            
+            # False checkbox (red)
+            false_checkbox = QCheckBox()
+            false_checkbox.setStyleSheet("QCheckBox::indicator:checked { background-color: red; }")
+            row_layout.addWidget(false_checkbox)
+            
+            # Objective name
+            label = QLabel(objective)
+            row_layout.addWidget(label)
+            row_layout.addStretch()
+            
+            # Store checkboxes for filtering
+            self.objective_checkboxes[objective] = (true_checkbox, false_checkbox)
+            
+            # Connect checkboxes to filter function
+            true_checkbox.stateChanged.connect(self.apply_filters)
+            false_checkbox.stateChanged.connect(self.apply_filters)
+            
+            # Add to layout
+            objective_filters_layout.addWidget(objective_row)
+
+        # Add filter scenario and rest of the jobs panel components
+        jobs_layout.addWidget(objective_filters)
+        jobs_layout.addWidget(UIPanels.setup_jobs_panel(self))
         
         # Add panels to splitter
         splitter.addWidget(input_panel)
@@ -392,8 +442,6 @@ class SubmitJobWindow(QMainWindow):
         - Queue length and status
         - Time until next submission
         - Current processing job ID
-        
-        Updates status bar with formatted status message.
         """
         total_jobs = len(self.jobs_data)
         filtered_count = self.jobs_table.rowCount()
@@ -411,13 +459,14 @@ class SubmitJobWindow(QMainWindow):
             remaining = int(self.job_processor.submit_rate_limit - time_since_last)
             queue_status = f"{jobs_count}Queue: {len(self.job_processor.job_queue)} job(s) - Next submission in {remaining}s"
             if self.job_processor.current_job:
-                queue_status = f"{jobs_count}Processing job {self.job_processor.current_job.job_id} - {queue_status}"
+                queue_status = f"{jobs_count}Processing job {self.job_processor.current_job['job_id']} - {queue_status}"
             self.statusBar().showMessage(queue_status)
         else:
             queue_msg = f"{jobs_count}Queue: {len(self.job_processor.job_queue)} job(s) - Ready to submit"
             if self.job_processor.current_job:
-                queue_msg = f"{jobs_count}Processing job {self.job_processor.current_job.job_id} - {queue_msg}"
+                queue_msg = f"{jobs_count}Processing job {self.job_processor.current_job['job_id']} - {queue_msg}"
             self.statusBar().showMessage(queue_msg)
+
 
 
     def update_submit_button_state(self):
@@ -529,7 +578,13 @@ class SubmitJobWindow(QMainWindow):
 
     # Delegate methods to managers
     def apply_filters(self):
+        """
+        Apply all active filters to the jobs table.
+        Handles both scenario text filter and objective checkboxes.
+        """
+        # Delegate to table manager
         self.table_manager.apply_filters()
+
 
     def sort_table(self, column):
         self.table_manager.sort_table(column)

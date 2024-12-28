@@ -1,0 +1,6 @@
+colorama>=0.4.6
+pandas>=2.1.0
+pyside6>=6.0.0
+python-dateutil>=2.8.2
+requests>=2.31.0
+setuptools>=75.6.0
