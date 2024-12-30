@@ -12,3 +12,5 @@ __pycache__/ui_components.cpython-312.pyc
 jobs_data - Copy.csv
 jobs_data.csv
 jobs_data.csv.bak
+*.pyc
+*.csv
