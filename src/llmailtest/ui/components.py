@@ -174,7 +174,8 @@ class UIPanels:
 			obj_layout.addWidget(QLabel(objective))
 			obj_layout.addStretch()
 			
-			parent.objective_checkboxes[objective] = {'yes': yes_cb, 'no': no_cb}
+			# Store checkboxes as tuple
+			parent.objective_checkboxes[objective] = (yes_cb, no_cb)
 			
 			yes_cb.stateChanged.connect(parent.apply_filters)
 			no_cb.stateChanged.connect(parent.apply_filters)

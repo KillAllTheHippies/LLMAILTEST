@@ -66,7 +66,7 @@ if !ERRORLEVEL! neq 0 (
 )
 
 echo %YELLOW%=== Running Integration Tests ===%NC%
-python -m pytest tests/test_integration.py -v --integration --html "test_reports\integration_test_report.html"
+python -m pytest tests/test_integration.py -v --html "test_reports\integration_test_report.html"
 if !ERRORLEVEL! neq 0 (
 	echo %RED%Integration tests failed%NC%
 	set TESTS_FAILED=1

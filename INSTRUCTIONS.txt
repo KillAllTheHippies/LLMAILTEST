@@ -1,70 +1,112 @@
-LLMail Competition Job Submission GUI - User Instructions
-======================================================
+# LLMailTest User Guide
 
-1. Application Overview
-----------------------
-The application provides a comprehensive interface for submitting and managing competition jobs across multiple scenarios and defense mechanisms.
+[![User Guide](https://img.shields.io/badge/guide-latest-blue)](https://example.com)
+[![Support](https://img.shields.io/badge/support-available-green)](mailto:support@example.com)
 
-2. Interface Layout
-------------------
-The main window consists of three adjustable panels:
-a) Left Panel - Job Submission:
-   - Scenario selection field
-   - Subject and body input areas
-   - Rate limit controls
-   - Queue status display
-   - Submit button with status indicators:
-     * Green: Ready to submit
-     * Orange: Rate limited
-     * Red: Rate limited with retries
+## Table of Contents
+1. [Getting Started](#getting-started)
+2. [Interface Overview](#interface-overview)
+3. [Job Submission](#job-submission)
+4. [Job Management](#job-management)
+5. [Advanced Features](#advanced-features)
+6. [Troubleshooting](#troubleshooting)
+7. [FAQ](#faq)
 
-b) Middle Panel - Job Details:
-   - Detailed view of selected job
-   - Job ID and scenario information
-   - Subject and body content
-   - Objectives status with color coding
-   - Template creation functionality
+## Getting Started
 
-c) Right Panel - Jobs History:
-   - Sortable job listing
-   - Filter controls
-   - Objective status indicators
-   - Time-based information
+### System Requirements
+- Windows 10/11 or macOS 10.15+
+- Python 3.9+
+- 4GB RAM minimum
 
-   - Updates job list from the server
+### Installation
+1. Download the latest release
+2. Extract the package
+3. Run the installer:
+   ```bash
+   python setup.py install
+   ```
 
-4. Viewing Job History
----------------------
-The right panel shows all submitted jobs with:
-- Scenario name
-- Objective statuses (✓ for success, ✗ for failure)
-- Subject and message body
-- Scheduled and started times
+## Interface Overview
 
-5. Filtering and Sorting
------------------------
-a) Filter jobs by:
-   - Scenario: Type in the scenario filter box
-   - Objectives: Use +/- checkboxes to include/exclude specific objectives
+### Main Window Layout
+```mermaid
+graph LR
+    A[Left Panel] --> B[Job Submission]
+    C[Middle Panel] --> D[Job Details]
+    E[Right Panel] --> F[Job History]
+```
 
-b) Sort jobs by:
-   - Click column headers or use the "Sort by" dropdown
-   - Toggle ascending/descending order with the arrow button
+### Panel Functions
+| Panel | Features |
+|-------|----------|
+| Left | Scenario selection, Subject/Body input, Rate controls |
+| Middle | Job details, Objectives status, Templates |
+| Right | Job history, Filtering, Sorting |
 
-6. Job Details and Templates
----------------------------
-a) View job details:
-   - Click on any job in the table to see full details
+## Job Submission
 
-b) Use existing job as template:
+### Basic Submission
+1. Select scenario
+2. Enter subject and body
+3. Set rate limit
+4. Click "Submit"
 
-   - Select a job from the table
-   - Click "Use as Template" to populate the submission form
+### Status Indicators
+| Color | Meaning |
+|-------|---------|
+| Green | Ready to submit |
+| Orange | Rate limited |
+| Red | Rate limited with retries |
 
-7. Status Information
---------------------
-- Job count is displayed in the left panel
-- Queue status and next submission time shown in status bar
-- Job processing status updates in real-time
+## Job Management
 
-Note: The application automatically saves all jobs and queue state to a local CSV file for persistence between sessions.
+### Viewing History
+- Sort by columns
+- Filter by scenario/objectives
+- View detailed job information
+
+### Using Templates
+1. Select job from history
+2. Click "Use as Template"
+3. Modify as needed
+4. Submit new job
+
+## Advanced Features
+
+### Keyboard Shortcuts
+| Shortcut | Action |
+|----------|--------|
+| Ctrl+N | New job |
+| Ctrl+T | Use template |
+| Ctrl+F | Filter jobs |
+
+### Batch Processing
+- Submit multiple jobs at once
+- Set global rate limits
+- Monitor batch progress
+
+## Troubleshooting
+
+### Common Issues
+1. **Connection Errors**: Check network settings
+2. **Rate Limiting**: Adjust submission rate
+3. **UI Freezes**: Restart application
+
+### Error Codes
+| Code | Solution |
+|------|----------|
+| 400 | Check job parameters |
+| 429 | Reduce submission rate |
+| 500 | Contact support |
+
+## FAQ
+
+**Q: How do I save my work?**
+A: Jobs are automatically saved to `jobs_data.csv`
+
+**Q: Can I export results?**
+A: Yes, use the "Export" button in the job history panel
+
+**Q: Where are test reports stored?**
+A: Reports are saved in the `test_reports` directory

@@ -14,3 +14,9 @@ __pycache__/submit_job.cpython-312.pyc
 __pycache__/submit_job.cpython-312.pyc
 *.csv
 *.bak
+*.pyc
+/.venv
+/__pycache__
+/__pycache__
+*.pyc
+/src/llmailtest/__pycache__

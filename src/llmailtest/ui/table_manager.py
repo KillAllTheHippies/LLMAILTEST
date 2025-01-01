@@ -29,6 +29,11 @@ class TableManager:
 		# Load defense levels data
 		defense_data = load_defense_levels('defense_levels.txt')
 
+		# Debug: Print types of objective checkboxes
+		print("Objective checkboxes types:")
+		for obj, (true_cb, false_cb) in self.parent.objective_checkboxes.items():
+			print(f"{obj}: true_cb={type(true_cb)}, false_cb={type(false_cb)}")
+
 		# Get checked objectives using tuple structure
 		yes_objectives = [obj for obj, (true_cb, _) in self.parent.objective_checkboxes.items() if true_cb.isChecked()]
 		no_objectives = [obj for obj, (_, false_cb) in self.parent.objective_checkboxes.items() if false_cb.isChecked()]

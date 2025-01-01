@@ -184,64 +184,9 @@ class SubmitJobWindow(QMainWindow):
         self.jobs_panel = QWidget()
         jobs_layout = QVBoxLayout(self.jobs_panel)
 
-        # Create objective filters container
-        objective_filters = QWidget()
-        objective_filters_layout = QVBoxLayout(objective_filters)
-        objective_filters_layout.setAlignment(Qt.AlignLeft)
-
-        # Add header labels
-        header_widget = QWidget()
-        header_layout = QHBoxLayout(header_widget)
-        header_layout.setContentsMargins(0, 0, 0, 0)
-        header_layout.setAlignment(Qt.AlignLeft)
-
-        # Add labels for True/False columns
-        true_label = QLabel("Pass")
-        true_label.setStyleSheet("color: green;")
-        false_label = QLabel("Fail")
-        false_label.setStyleSheet("color: red;")
-        header_layout.addWidget(true_label)
-        header_layout.addWidget(false_label)
-        header_layout.addWidget(QLabel("Objective"))
-        header_layout.addStretch()
-
-        objective_filters_layout.addWidget(header_widget)
-
-        # Add objective checkboxes
-        for objective in self.objective_order:
-            objective_row = QWidget()
-            row_layout = QHBoxLayout(objective_row)
-            row_layout.setContentsMargins(0, 0, 0, 0)
-            row_layout.setAlignment(Qt.AlignLeft)
-            
-            # True checkbox (green)
-            true_checkbox = QCheckBox()
-            true_checkbox.setStyleSheet("QCheckBox::indicator:checked { background-color: green; }")
-            row_layout.addWidget(true_checkbox)
-            
-            # False checkbox (red)
-            false_checkbox = QCheckBox()
-            false_checkbox.setStyleSheet("QCheckBox::indicator:checked { background-color: red; }")
-            row_layout.addWidget(false_checkbox)
-            
-            # Objective name
-            label = QLabel(objective)
-            row_layout.addWidget(label)
-            row_layout.addStretch()
-            
-            # Store checkboxes for filtering
-            self.objective_checkboxes[objective] = (true_checkbox, false_checkbox)
-            
-            # Connect checkboxes to filter function
-            true_checkbox.stateChanged.connect(self.apply_filters)
-            false_checkbox.stateChanged.connect(self.apply_filters)
-            
-            # Add to layout
-            objective_filters_layout.addWidget(objective_row)
-
-        # Add filter scenario and rest of the jobs panel components
-        jobs_layout.addWidget(objective_filters)
+        # Add jobs panel components
         jobs_layout.addWidget(UIPanels.setup_jobs_panel(self))
+
         
         # Add panels to splitter
         splitter.addWidget(input_panel)

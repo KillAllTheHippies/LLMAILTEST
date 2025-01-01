@@ -197,18 +197,20 @@ class UIPanels:
         objectives_layout.setSpacing(2)  # Reduced spacing
         
         # Create checkbox pairs for each objective
-        parent.objective_checkboxes = {}
         for objective in parent.objective_order:
+
             obj_widget = QWidget()
             obj_layout = QHBoxLayout(obj_widget)
             obj_layout.setContentsMargins(0, 0, 0, 0)
             obj_layout.setSpacing(2)
             
-            yes_cb = QCheckBox("Y")
-            no_cb = QCheckBox("N")
+            # True checkbox (green)
+            yes_cb = QCheckBox()
+            yes_cb.setStyleSheet("QCheckBox::indicator:checked { background-color: green; }")
             
-            yes_cb.setStyleSheet("QCheckBox { color: green; }")
-            no_cb.setStyleSheet("QCheckBox { color: red; }")
+            # False checkbox (red)
+            no_cb = QCheckBox()
+            no_cb.setStyleSheet("QCheckBox::indicator:checked { background-color: red; }")
             
             yes_cb.stateChanged.connect(parent.apply_filters)
             no_cb.stateChanged.connect(parent.apply_filters)
@@ -219,10 +221,8 @@ class UIPanels:
             obj_layout.addWidget(QLabel(objective))
             obj_layout.addStretch()
             
-            parent.objective_checkboxes[objective] = {
-                'yes': yes_cb,
-                'no': no_cb
-            }
+            # Store checkboxes as tuple
+            parent.objective_checkboxes[objective] = (yes_cb, no_cb)
             
             objectives_layout.addWidget(obj_widget)
             
