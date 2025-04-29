@@ -1,3 +1,6 @@
+![image](https://github.com/user-attachments/assets/40e99013-d13c-4b6c-a9d0-ece2c74e6dd3)
+
+
 # LLMail Competition Job Submission GUI
 
 A professional Qt-based GUI application for managing and monitoring competition job submissions with comprehensive job tracking, analysis, and management capabilities.
